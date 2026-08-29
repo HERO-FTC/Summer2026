@@ -33,19 +33,16 @@ public class Main_Chain_Auto extends OpMode {
     private static final int LIMELIGHT_PIPELINE = 9;
     private static final double AIM_DEADBAND_DEG = 2;
     private static final double LONG_TARGET_RPM = 2935;
-    private static final double SPEED_TOLERANCE_RPM = 75; // how close to target counts as "at speed"
     private static final long ALIGN_MAX_MS = 3000;
-    private static final long SPINUP_MAX_MS = 1500; // don't wait forever if flywheel can't reach target
-    private static final long FEED_MS = 1250;        // how long the feeder runs to push one ball through
-    private static final long SHOT_GAP_MS = 150;      // brief pause between shots to let the PID recover speed
+    private static final long FEED_MS = 1250;
+    private static final long SHOT_GAP_MS = 150;       // small pause between shots 2/3 (no re-align, no re-windup)
     private static final double FEED_POWER = 0.99;
     private static final double INTAKE_POWER = 0.95;
     private static final double INTAKE2_PICKUP_POWER = 0.75;
     private static final int SHOTS_PER_STOP = 3;
 
-    // shoot-sequence sub-state
-    private enum ShootPhase { SPIN_UP, ALIGN, LAUNCH, GAP }
-    private ShootPhase shootPhase = ShootPhase.SPIN_UP;
+    private boolean feeding = false;
+    private long feedStartMs = 0;
     private int shotsFired = 0;
     private boolean finalShotStarted = false; // guards onFinalShotStart firing more than once
 
@@ -103,20 +100,11 @@ public class Main_Chain_Auto extends OpMode {
             o2.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidf);
         }
 
-        /** Commands the target velocity. The onboard PIDF loop holds it from here -
-         *  callers only need to invoke this once when entering a shoot sequence. */
+        /** Commands the target velocity. The onboard PIDF loop holds it from here. */
         public void spinUp(double targetRPM) {
             double targetTPS = (targetRPM / 60.0) * OUT_COUNTS_PER_MOTOR_REV;
             o1.setVelocity(targetTPS);
             o2.setVelocity(targetTPS);
-        }
-
-        /** True once both flywheels are within toleranceRPM of targetRPM. */
-        public boolean isAtSpeed(double targetRPM, double toleranceRPM) {
-            double targetTPS = (targetRPM / 60.0) * OUT_COUNTS_PER_MOTOR_REV;
-            double toleranceTPS = (toleranceRPM / 60.0) * OUT_COUNTS_PER_MOTOR_REV;
-            return Math.abs(o1.getVelocity() - targetTPS) <= toleranceTPS
-                    && Math.abs(o2.getVelocity() - targetTPS) <= toleranceTPS;
         }
 
         public void stop() {
@@ -172,64 +160,47 @@ public class Main_Chain_Auto extends OpMode {
      * @param onFinalShotStart fires ONCE, the instant the last ball's feed pulse begins -
      *                         use this to kick off the next path immediately so driving
      *                         overlaps with the last shot instead of waiting for it to finish.
-     * @param onComplete       fires after the last feed pulse actually finishes and every
-     *                         shoot motor has been stopped - use this to advance pathState.
+     * @param onComplete       fires after the last feed pulse finishes and every shoot motor
+     *                         has been stopped - use this to advance pathState.
      */
     private boolean runShootSequence(Runnable onFinalShotStart, Runnable onComplete) {
+        outtake.spinUp(LONG_TARGET_RPM); // commanded every loop - PIDF just holds the setpoint, harmless to repeat
+        boolean aligned = turret.autoAlign(limelight);
         long elapsed = (long) (pathTimer.getElapsedTimeSeconds() * 1000);
 
-        switch (shootPhase) {
-            case SPIN_UP:
-                outtake.spinUp(LONG_TARGET_RPM); // commanded once on entry into this phase
-                if (outtake.isAtSpeed(LONG_TARGET_RPM, SPEED_TOLERANCE_RPM) || elapsed >= SPINUP_MAX_MS) {
-                    shootPhase = ShootPhase.ALIGN;
-                    pathTimer.resetTimer();
-                }
-                break;
+        if (!feeding) {
+            // first shot waits on alignment; shots 2 and 3 just need the short recovery gap -
+            // no re-align, no re-windup, purely time-based so it can never hang waiting on a
+            // sensor condition that might not trip
+            boolean readyToFire = (shotsFired == 0)
+                    ? (aligned || elapsed >= ALIGN_MAX_MS)
+                    : (elapsed >= SHOT_GAP_MS);
 
-            case ALIGN:
-                boolean aligned = turret.autoAlign(limelight);
-                if (aligned || elapsed >= ALIGN_MAX_MS) {
-                    intake.setPower(INTAKE_POWER);
-                    intake2.setPower(FEED_POWER);
-                    shootPhase = ShootPhase.LAUNCH;
-                    pathTimer.resetTimer();
-                }
-                break;
+            if (readyToFire) {
+                feeding = true;
+                feedStartMs = elapsed;
+                intake.setPower(INTAKE_POWER);   // main intake runs the whole time balls are launching
+                intake2.setPower(FEED_POWER);
 
-            case LAUNCH:
-                // as soon as the final ball starts feeding, go ahead and start moving -
-                // no need to wait for the feed pulse to finish before the robot drives off
                 if (shotsFired == SHOTS_PER_STOP - 1 && !finalShotStarted) {
                     finalShotStarted = true;
                     if (onFinalShotStart != null) onFinalShotStart.run();
                 }
-                if (elapsed >= FEED_MS) {
-                    shotsFired++;
-                    if (shotsFired >= SHOTS_PER_STOP) {
-                        intake.setPower(0);
-                        intake2.setPower(0);
-                        outtake.stop();
-                        shotsFired = 0;
-                        finalShotStarted = false;
-                        shootPhase = ShootPhase.SPIN_UP;
-                        onComplete.run();
-                        return true;
-                    } else {
-                        shootPhase = ShootPhase.GAP;
-                        pathTimer.resetTimer();
-                    }
-                }
-                break;
+            }
+        } else if (elapsed - feedStartMs >= FEED_MS) {
+            intake2.setPower(0);
+            feeding = false;
+            shotsFired++;
+            pathTimer.resetTimer();
 
-            case GAP:
-                // intake keeps running so the next ball is staged; feeder pauses briefly
-                if (elapsed >= SHOT_GAP_MS && outtake.isAtSpeed(LONG_TARGET_RPM, SPEED_TOLERANCE_RPM)) {
-                    intake2.setPower(FEED_POWER);
-                    shootPhase = ShootPhase.LAUNCH;
-                    pathTimer.resetTimer();
-                }
-                break;
+            if (shotsFired >= SHOTS_PER_STOP) {
+                intake.setPower(0);
+                outtake.stop();
+                shotsFired = 0;
+                finalShotStarted = false;
+                onComplete.run();
+                return true;
+            }
         }
         return false;
     }
@@ -315,7 +286,7 @@ public class Main_Chain_Auto extends OpMode {
 
     public void setPathState(int pState) {
         pathState = pState;
-        shootPhase = ShootPhase.SPIN_UP;
+        feeding = false;
         shotsFired = 0;
         finalShotStarted = false;
         pathTimer.resetTimer();
@@ -360,7 +331,10 @@ public class Main_Chain_Auto extends OpMode {
         autonomousPathUpdate();
 
         telemetry.addData("path state", pathState);
-        telemetry.addData("shoot phase", shootPhase);
+        telemetry.addData("feeding", feeding);
+        telemetry.addData("shots fired", shotsFired);
+        telemetry.addData("final shot started", finalShotStarted);
+        telemetry.addData("follower busy", follower.isBusy());
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
         telemetry.addData("heading", follower.getPose().getHeading());
