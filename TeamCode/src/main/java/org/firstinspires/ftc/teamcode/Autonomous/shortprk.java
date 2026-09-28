@@ -1,13 +1,10 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import androidx.annotation.NonNull;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -20,7 +17,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.TeleOP.TurretController;
+import org.firstinspires.ftc.teamcode.TeleOp.TurretController;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 /**
  * Pedro Pathing 2.0 conversion of autoBlue_longPARK.
