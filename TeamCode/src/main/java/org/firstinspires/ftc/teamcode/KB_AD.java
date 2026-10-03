@@ -16,7 +16,7 @@ public class KB_AD extends OpMode {
 
     private Follower follower;
     private Timer pathTimer;
-    private int pathState;
+    private int pathState
 
 
     private final Pose bottomTip = new Pose(72, 40, Math.toRadians(0));
