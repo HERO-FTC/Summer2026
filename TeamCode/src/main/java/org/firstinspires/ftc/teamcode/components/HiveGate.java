@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.components;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 import java.util.Set;
-
+@Disabled
 public class HiveGate {
 
 

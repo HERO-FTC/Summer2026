@@ -2,8 +2,9 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
+@Disabled
 public class Limelighttargeting {
     private final Limelight3A limelight;
     private double cameraHeightIn = 10.0;
