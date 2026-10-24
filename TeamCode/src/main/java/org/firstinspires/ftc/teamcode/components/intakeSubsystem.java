@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.config.RobotInit;
 
@@ -11,8 +12,8 @@ public class intakeSubsystem {
     private final DcMotorEx outerIntake;
     private final DcMotorEx innerIntake;
 
-    private static final double OUTER_RPM = 1620.0;
-    private static final double INNER_RPM = 435.0;
+    private static final double OUTER_RPM = 1150*0.95;
+    private static final double INNER_RPM = 1620.0*0.99;
 
     private final double outerTicksPerRev;
     private final double innerTicksPerRev;
@@ -37,6 +38,7 @@ public class intakeSubsystem {
 
         outerIntake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         innerIntake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        outerIntake.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
     public void runOuter(double power) {

@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode.test;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "outake", group = "Components")
 public class OutakeTest extends LinearOpMode {
@@ -36,7 +37,7 @@ public class OutakeTest extends LinearOpMode {
         intake2 = hardwareMap.get(DcMotorEx.class, "in2");
         intake = hardwareMap.get(DcMotorEx.class, "in1");
 
-        out1.setDirection(DcMotorEx.Direction.FORWARD);
+        out1.setDirection(DcMotorEx.Direction.REVERSE);
         intake2.setDirection(DcMotorEx.Direction.FORWARD);
         intake.setDirection(DcMotorEx.Direction.REVERSE);
 

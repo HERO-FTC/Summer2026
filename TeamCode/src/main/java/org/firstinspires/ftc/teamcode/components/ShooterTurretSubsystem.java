@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 
@@ -14,9 +15,9 @@ public class ShooterTurretSubsystem {
     private final Servo flowerServo;
     private final CRServo turret;
 
-    private static final double FLOWER_BAR_UP = 0.2;
-    private static final double FLOWER_BAR_DOWN = 0.8;
-    private static final double TARGET_RPM = 6000.0;
+    private static final double FLOWER_BAR_UP = 0.57;
+    private static final double FLOWER_BAR_DOWN = 0.23;
+    private static final double TARGET_RPM = 6000*0.65;
 
     private final double ticksPerRev;
 
@@ -25,14 +26,14 @@ public class ShooterTurretSubsystem {
         flowerServo = config.flowerServo;
         turret = config.turret;
 
-        ticksPerRev = flywheel.getMotorType().getTicksPerRev();
+        ticksPerRev = 28;
 
         flywheel.setZeroPowerBehavior(
                 DcMotor.ZeroPowerBehavior.FLOAT
         );
 
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+        flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flowerServo.setPosition(FLOWER_BAR_UP);
         turret.setPower(0);
     }
