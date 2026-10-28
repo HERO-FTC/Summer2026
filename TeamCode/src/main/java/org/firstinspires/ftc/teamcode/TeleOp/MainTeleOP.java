@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.components.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.components.intakeSubsystem;
 import org.firstinspires.ftc.teamcode.components.ShooterTurretSubsystem;
 
-@TeleOp(name = "Main Multi Mechanism TeleOp", group = "Competition")
+@TeleOp(name = "-BioBuzzTeleOpV1", group = "Competition")
 public class MainTeleOP extends LinearOpMode {
 
     private RobotInit config;
@@ -28,6 +28,7 @@ public class MainTeleOP extends LinearOpMode {
         shooter = new ShooterTurretSubsystem(config);
 
         telemetry.addLine("Robot ready");
+        telemetry.addLine("Outer + Middle intakes linked");
         telemetry.update();
 
         waitForStart();
@@ -49,11 +50,14 @@ public class MainTeleOP extends LinearOpMode {
                         turn * driveScale
                 );
 
-                // Run both intakes backward to reverse them
+                // Intake controls
+                // Left trigger: outer and middle together
+                // Right trigger: inner intake independently
+                // D-pad down: reverse all three intakes
                 if (gamepad2.dpad_down) {
                     intake.runBoth(-1.0);
                 } else {
-                    intake.runOuter(gamepad2.left_trigger);
+                    intake.runOuterAndMiddle(gamepad2.left_trigger);
                     intake.runInner(gamepad2.right_trigger);
                 }
 
@@ -64,7 +68,7 @@ public class MainTeleOP extends LinearOpMode {
                     shooter.stopFlywheel();
                 }
 
-                // Use the left stick to turn the turret.bbv
+                // Use the left stick to turn the turret
                 double turretInput = gamepad2.left_stick_x;
 
                 if (Math.abs(turretInput) > 0.08) {
@@ -80,17 +84,52 @@ public class MainTeleOP extends LinearOpMode {
                     shooter.flowerBarDown();
                 }
 
-                // Show what the robot is doing
+                // Telemetry
                 telemetry.addData("Forward", "%.2f", forward);
                 telemetry.addData("Strafe", "%.2f", strafe);
                 telemetry.addData("Turn", "%.2f", turn);
-                telemetry.addData("Outer Intake", "%.2f", gamepad2.left_trigger);
-                telemetry.addData("Inner Intake", "%.2f", gamepad2.right_trigger);
+
+                telemetry.addData(
+                        "Outer Intake RPM",
+                        "%.0f",
+                        intake.getOuterRPM()
+                );
+
+                telemetry.addData(
+                        "Middle Intake RPM",
+                        "%.0f",
+                        intake.getMiddleRPM()
+                );
+
+                telemetry.addData(
+                        "Inner Intake RPM",
+                        "%.0f",
+                        intake.getInnerRPM()
+                );
+
+                telemetry.addData(
+                        "Outer + Middle Input",
+                        "%.2f",
+                        gamepad2.dpad_down
+                                ? -1.0
+                                : gamepad2.left_trigger
+                );
+
+                telemetry.addData(
+                        "Inner Intake Input",
+                        "%.2f",
+                        gamepad2.dpad_down
+                                ? -1.0
+                                : gamepad2.right_trigger
+                );
+
                 telemetry.addData(
                         "Flywheel",
                         gamepad2.right_bumper ? "ON" : "OFF"
                 );
-                telemetry.addData("Turret", "%.2f", turretInput);
+
+                telemetry.addData("Turret Input", "%.2f", turretInput);
+
                 telemetry.addData(
                         "Flower Bar",
                         gamepad2.a ? "UP" :

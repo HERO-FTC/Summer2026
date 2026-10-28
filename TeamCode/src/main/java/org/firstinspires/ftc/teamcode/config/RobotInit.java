@@ -1,3 +1,4 @@
+
 package org.firstinspires.ftc.teamcode.config;
 
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -13,6 +14,7 @@ public class RobotInit {
     public DcMotorEx backRight;
 
     public DcMotorEx intakeOuter;
+    public DcMotorEx middleIntake;
     public DcMotorEx intakeInner;
 
     public DcMotorEx flywheel;
@@ -27,6 +29,7 @@ public class RobotInit {
         backRight = hardwareMap.get(DcMotorEx.class, "backRight");
 
         intakeOuter = hardwareMap.get(DcMotorEx.class, "intakeOuter");
+        middleIntake = hardwareMap.get(DcMotorEx.class, "middleIntake");
         intakeInner = hardwareMap.get(DcMotorEx.class, "intakeInner");
 
         flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");

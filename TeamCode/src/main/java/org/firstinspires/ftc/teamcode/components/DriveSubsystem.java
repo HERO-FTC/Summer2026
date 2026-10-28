@@ -34,7 +34,7 @@ public class DriveSubsystem {
         double br = forward + strafe - turn;
 
         double max = Math.max(
-                1.0,
+                0.8,
                 Math.max(
                         Math.max(Math.abs(fl), Math.abs(fr)),
                         Math.max(Math.abs(bl), Math.abs(br))
