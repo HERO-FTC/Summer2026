@@ -17,7 +17,7 @@ public class ShooterTurretSubsystem {
 
     private static final double FLOWER_BAR_UP = 0.97;
     private static final double FLOWER_BAR_DOWN = 0.58;
-    private static final double TARGET_RPM = 6000*0.65;
+    private static final double TARGET_RPM = 6000 * 0.65;
 
     private final double ticksPerRev;
 
@@ -26,14 +26,12 @@ public class ShooterTurretSubsystem {
         flowerServo = config.flowerServo;
         turret = config.turret;
 
-        ticksPerRev = 28;
+        ticksPerRev = 28.0;
 
-        flywheel.setZeroPowerBehavior(
-                DcMotor.ZeroPowerBehavior.FLOAT
-        );
-
+        flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
+
         flowerServo.setPosition(FLOWER_BAR_UP);
         turret.setPower(0);
     }

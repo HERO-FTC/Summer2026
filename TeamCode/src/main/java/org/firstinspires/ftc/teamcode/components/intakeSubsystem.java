@@ -13,7 +13,7 @@ public class intakeSubsystem {
     private final DcMotorEx middleIntake;
     private final DcMotorEx innerIntake;
 
-    private static final double OUTER_RPM = 1150.0 * 0.80;
+    private static final double OUTER_RPM = 1150.0 * 0.99;
     private static final double MIDDLE_RPM = OUTER_RPM;
     private static final double INNER_RPM = 1620.0 * 0.99;
 
@@ -26,60 +26,63 @@ public class intakeSubsystem {
         middleIntake = config.middleIntake;
         innerIntake = config.intakeInner;
 
-        outerTicksPerRev =
-                outerIntake.getMotorType().getTicksPerRev();
+        outerTicksPerRev = outerIntake.getMotorType().getTicksPerRev();
+        middleTicksPerRev = middleIntake.getMotorType().getTicksPerRev();
+        innerTicksPerRev = innerIntake.getMotorType().getTicksPerRev();
 
-        middleTicksPerRev =
-                middleIntake.getMotorType().getTicksPerRev();
-
-        innerTicksPerRev =
-                innerIntake.getMotorType().getTicksPerRev();
-
-        outerIntake.setZeroPowerBehavior(
-                DcMotor.ZeroPowerBehavior.BRAKE);
-        middleIntake.setZeroPowerBehavior(
-                DcMotor.ZeroPowerBehavior.BRAKE);
-        innerIntake.setZeroPowerBehavior(
-                DcMotor.ZeroPowerBehavior.BRAKE);
+        outerIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        middleIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        innerIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         outerIntake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         middleIntake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         innerIntake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Set directions as needed for your robot's mechanism
         outerIntake.setDirection(DcMotorSimple.Direction.REVERSE);
         middleIntake.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     public void runOuter(double power) {
         outerIntake.setVelocity(
-                power * OUTER_RPM * outerTicksPerRev / 60.0);
+                power * OUTER_RPM * outerTicksPerRev / 60.0
+        );
     }
 
     public void runMiddle(double power) {
         middleIntake.setVelocity(
-                power * MIDDLE_RPM * middleTicksPerRev / 60.0);
+                power * MIDDLE_RPM * middleTicksPerRev / 60.0
+        );
     }
 
     public void runInner(double power) {
         innerIntake.setVelocity(
-                power * INNER_RPM * innerTicksPerRev / 60.0);
+                power * INNER_RPM * innerTicksPerRev / 60.0
+        );
     }
 
-    // Outer and middle intakes run together
+    // Keeps the existing boolean controls in MainTeleOP working.
+    public void runOuterAndMiddle(boolean enabled) {
+        runOuterAndMiddle(enabled ? 1.0 : 0.0);
+    }
+
+    // Run both motors at the same power, including reverse power.
     public void runOuterAndMiddle(double power) {
         runOuter(power);
         runMiddle(power);
     }
 
-    // Run all three intakes together
+    public void runInner(boolean enabled) {
+        runInner(enabled ? 1.0 : 0.0);
+    }
+
+    // Run all three motors together.
     public void runBoth(double power) {
         runOuterAndMiddle(power);
         runInner(power);
     }
 
     public void stop() {
-        runBoth(0);
+        runBoth(0.0);
     }
 
     public double getOuterRPM() {
