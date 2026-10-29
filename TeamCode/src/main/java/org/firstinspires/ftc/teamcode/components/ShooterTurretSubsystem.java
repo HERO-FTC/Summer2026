@@ -17,7 +17,7 @@ public class ShooterTurretSubsystem {
 
     private static final double FLOWER_BAR_UP = 0.97;
     private static final double FLOWER_BAR_DOWN = 0.58;
-    private static final double TARGET_RPM = 6000 * 0.65;
+    private static final double TARGET_RPM = 6000 * 0.47;
 
     private final double ticksPerRev;
 
