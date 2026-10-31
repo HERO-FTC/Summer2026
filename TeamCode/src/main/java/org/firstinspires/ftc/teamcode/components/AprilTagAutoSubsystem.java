@@ -20,6 +20,8 @@ public class AprilTagAutoSubsystem {
     private final intakeSubsystem intake;
     private final ShooterTurretSubsystem shooter;
 
+    private final boolean isBlue;
+
     private final DcMotor frontLeft;
     private final DcMotor frontRight;
     private final DcMotor backLeft;
@@ -48,10 +50,12 @@ public class AprilTagAutoSubsystem {
     public AprilTagAutoSubsystem(
             HardwareMap hardwareMap,
             intakeSubsystem intake,
-            ShooterTurretSubsystem shooter) {
+            ShooterTurretSubsystem shooter,
+            boolean isBlue) {
 
         this.intake = intake;
         this.shooter = shooter;
+        this.isBlue = isBlue;
 
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
@@ -76,10 +80,8 @@ public class AprilTagAutoSubsystem {
 
         shooter.startFlywheel();
 
-        // Keep outer and middle intake running.
         intake.runOuterAndMiddle(1.0);
 
-        // Inner intake starts off.
         intake.runInner(0.0);
 
         shootingEnabled = false;
@@ -88,7 +90,6 @@ public class AprilTagAutoSubsystem {
 
         driveFinished = false;
 
-        // Start the 100ms drive timer.
         driveTimer.reset();
 
         autoStarted = true;
@@ -115,10 +116,8 @@ public class AprilTagAutoSubsystem {
             return;
         }
 
-        // Outer and middle intake ALWAYS run.
         intake.runOuterAndMiddle(1.0);
 
-        // Drive forward at 40% for 100ms.
         if (!driveFinished) {
 
             if (driveTimer.seconds() < DRIVE_TIME) {
@@ -137,12 +136,11 @@ public class AprilTagAutoSubsystem {
             return;
         }
 
-        // Wait until shooting is enabled.
         if (!shootingEnabled) {
             return;
         }
 
-        boolean targetVisible = isBlueScorableCellVisible();
+        boolean targetVisible = isCorrectAllianceTargetVisible();
 
         if (feeding) {
 
@@ -169,7 +167,7 @@ public class AprilTagAutoSubsystem {
         }
     }
 
-    private boolean isBlueScorableCellVisible() {
+    private boolean isCorrectAllianceTargetVisible() {
 
         List<AprilTagDetection> detections =
                 aprilTag.getDetections();
@@ -183,11 +181,20 @@ public class AprilTagAutoSubsystem {
 
                 if (cluster.metadata != null &&
                         cluster.metadata.name != null &&
-                        cluster.metadata.name.startsWith("B") &&
-                        detection.ftcPose != null &&
-                        Math.abs(detection.ftcPose.roll) < 90) {
+                        detection.ftcPose != null) {
 
-                    return true;
+                    String name = cluster.metadata.name;
+
+                    boolean correctAlliance =
+                            isBlue
+                                    ? name.startsWith("B")
+                                    : name.startsWith("R");
+
+                    if (correctAlliance &&
+                            Math.abs(detection.ftcPose.roll) < 90) {
+
+                        return true;
+                    }
                 }
             }
         }
@@ -201,6 +208,10 @@ public class AprilTagAutoSubsystem {
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+    }
+
+    public boolean isDriveFinished() {
+        return driveFinished;
     }
 
     public void stop() {
@@ -218,8 +229,5 @@ public class AprilTagAutoSubsystem {
             visionPortal.close();
             visionClosed = true;
         }
-    }
-    public boolean isDriveFinished() {
-        return driveFinished;
     }
 }
