@@ -21,6 +21,7 @@ public class TestColor {
         colorSensor.setGain(5);
     }
 
+
     public DetectedColor getDetectedColor(Telemetry telemetry){
         NormalizedRGBA colors = colorSensor.getNormalizedColors(); // return 4 values
 

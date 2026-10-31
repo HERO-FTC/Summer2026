@@ -1,35 +1,20 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.LED;
+
+import org.firstinspires.ftc.teamcode.mechanisms.TestColor;
 
 @TeleOp
-public class colorSensor extends LinearOpMode {
-    ColorSensor cs1;
-//    ColorSensor cs2;
-    private LED redLed;
-    private LED greenLed;
+public class colorSensor {
+    TestColor color = new TestColor();
+    public void init(){
+        color.init(hardwareMap);
+}
 
-    @Override
-    public void runOpMode() {
-        cs1 = hardwareMap.get(ColorSensor.class, "Color");
-        redLed = hardwareMap.get(LED.class, "led_red");
-        greenLed = hardwareMap.get(LED.class, "led_green");
+    public void loop(){
 
-        waitForStart();
-
-        while (opModeIsActive()) {
-            Telemetry();
-        }
     }
 
-    private void Telemetry(){
-    telemetry.clear();
-        telemetry.addData("Red", cs1.red());
-        telemetry.addData("Green", cs1.green());
-        telemetry.addData("Blue", cs1.blue());
-        telemetry.update();
-    }
 }
