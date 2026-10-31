@@ -2,9 +2,9 @@
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.config.RobotInit;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -19,16 +19,9 @@ public class AprilTagAutoSubsystem {
 
     private final intakeSubsystem intake;
     private final ShooterTurretSubsystem shooter;
+    private final RobotInit robot;
 
     private final boolean isBlue;
-
-    private final DcMotor frontLeft;
-    private final DcMotor frontRight;
-    private final DcMotor backLeft;
-    private final DcMotor backRight;
-
-    private final AprilTagProcessor aprilTag;
-    private final VisionPortal visionPortal;
 
     private final ElapsedTime driveTimer = new ElapsedTime();
     private final ElapsedTime feedTimer = new ElapsedTime();
@@ -47,20 +40,20 @@ public class AprilTagAutoSubsystem {
     private boolean shootingEnabled = false;
     private boolean visionClosed = false;
 
+    private final AprilTagProcessor aprilTag;
+    private final VisionPortal visionPortal;
+
     public AprilTagAutoSubsystem(
             HardwareMap hardwareMap,
             intakeSubsystem intake,
             ShooterTurretSubsystem shooter,
-            boolean isBlue) {
+            boolean isBlue,
+            RobotInit robot) {
 
         this.intake = intake;
         this.shooter = shooter;
         this.isBlue = isBlue;
-
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        this.robot = robot;
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setTagLibrary(
@@ -81,17 +74,14 @@ public class AprilTagAutoSubsystem {
         shooter.startFlywheel();
 
         intake.runOuterAndMiddle(1.0);
-
         intake.runInner(0.0);
 
         shootingEnabled = false;
         hasFed = false;
         feeding = false;
-
         driveFinished = false;
 
         driveTimer.reset();
-
         autoStarted = true;
     }
 
@@ -122,10 +112,10 @@ public class AprilTagAutoSubsystem {
 
             if (driveTimer.seconds() < DRIVE_TIME) {
 
-                frontLeft.setPower(DRIVE_POWER);
-                frontRight.setPower(DRIVE_POWER);
-                backLeft.setPower(DRIVE_POWER);
-                backRight.setPower(DRIVE_POWER);
+                robot.frontLeft.setPower(DRIVE_POWER);
+                robot.frontRight.setPower(DRIVE_POWER);
+                robot.backLeft.setPower(DRIVE_POWER);
+                robot.backRight.setPower(DRIVE_POWER);
 
             } else {
 
@@ -204,10 +194,10 @@ public class AprilTagAutoSubsystem {
 
     private void stopDrive() {
 
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
+        robot.frontLeft.setPower(0);
+        robot.frontRight.setPower(0);
+        robot.backLeft.setPower(0);
+        robot.backRight.setPower(0);
     }
 
     public boolean isDriveFinished() {
