@@ -17,21 +17,26 @@ public class AprilTagAuto extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+        // Initialize existing robot configuration
         RobotInit robot = new RobotInit(hardwareMap);
 
+        // Initialize intake
         intakeSubsystem intake = new intakeSubsystem(robot);
 
+        // Initialize shooter
         ShooterTurretSubsystem shooter =
                 new ShooterTurretSubsystem(robot);
 
+        // Initialize BLUE autonomous
         autoSubsystem = new AprilTagAutoSubsystem(
                 hardwareMap,
                 intake,
                 shooter,
-                true
+                true,
+                robot
         );
 
-        telemetry.addLine("Blue AprilTag Auto Initialized");
+        telemetry.addLine("BLUE AprilTag Auto Initialized");
         telemetry.addLine("Waiting for start...");
         telemetry.update();
 
