@@ -55,12 +55,14 @@ public class AprilTagAutoSubsystem {
         this.isBlue = isBlue;
         this.robot = robot;
 
+        // Initialize AprilTag processor
         aprilTag = new AprilTagProcessor.Builder()
                 .setTagLibrary(
                         AprilTagGameDatabase.getCurrentGameTagLibrary()
                 )
                 .build();
 
+        // Initialize webcam
         visionPortal = new VisionPortal.Builder()
                 .setCamera(
                         hardwareMap.get(WebcamName.class, "Webcam 1")
@@ -71,17 +73,24 @@ public class AprilTagAutoSubsystem {
 
     public void startAuto() {
 
+        // Start flywheel
         shooter.startFlywheel();
 
+        // Start outer and middle intake
         intake.runOuterAndMiddle(1.0);
+
+        // Keep inner intake off initially
         intake.runInner(0.0);
 
         shootingEnabled = false;
         hasFed = false;
         feeding = false;
+
         driveFinished = false;
 
+        // Start initial movement timer
         driveTimer.reset();
+
         autoStarted = true;
     }
 
@@ -106,8 +115,10 @@ public class AprilTagAutoSubsystem {
             return;
         }
 
+        // Outer and middle intake always run
         intake.runOuterAndMiddle(1.0);
 
+        // Initial forward movement
         if (!driveFinished) {
 
             if (driveTimer.seconds() < DRIVE_TIME) {
@@ -126,12 +137,16 @@ public class AprilTagAutoSubsystem {
             return;
         }
 
+        // Wait until shooting is enabled
         if (!shootingEnabled) {
             return;
         }
 
-        boolean targetVisible = isCorrectAllianceTargetVisible();
+        // Check for correct alliance AprilTag
+        boolean targetVisible =
+                isCorrectAllianceTargetVisible();
 
+        // Handle active feeding
         if (feeding) {
 
             if (!targetVisible ||
@@ -144,8 +159,10 @@ public class AprilTagAutoSubsystem {
             return;
         }
 
+        // Feed when correct AprilTag is detected
         if (targetVisible &&
-                (!hasFed || cooldownTimer.seconds() >= BALL_INTERVAL)) {
+                (!hasFed ||
+                        cooldownTimer.seconds() >= BALL_INTERVAL)) {
 
             intake.runInner(1.0);
 
@@ -170,8 +187,7 @@ public class AprilTagAutoSubsystem {
                         (AprilTagClusterDetection) detection;
 
                 if (cluster.metadata != null &&
-                        cluster.metadata.name != null &&
-                        detection.ftcPose != null) {
+                        cluster.metadata.name != null) {
 
                     String name = cluster.metadata.name;
 
@@ -180,9 +196,7 @@ public class AprilTagAutoSubsystem {
                                     ? name.startsWith("B")
                                     : name.startsWith("R");
 
-                    if (correctAlliance &&
-                            Math.abs(detection.ftcPose.roll) < 90) {
-
+                    if (correctAlliance) {
                         return true;
                     }
                 }
