@@ -1,3 +1,4 @@
+
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,8 +15,7 @@ public class intakeSubsystem {
 
     private static final double OUTER_RPM = 1150.0 * 0.99;
     private static final double MIDDLE_RPM = OUTER_RPM;
-    private static final double INNER_RPM = 1620.0 * 0.60;
-    //Kicker
+    private static final double INNER_RPM = 1620.0 * 0.60; //kicker
 
     private final double outerTicksPerRev;
     private final double middleTicksPerRev;
