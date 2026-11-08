@@ -2,11 +2,11 @@
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.config.RobotInit;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagClusterDetection;
@@ -17,46 +17,54 @@ import java.util.List;
 
 public class AprilTagAutoSubsystem {
 
+    // Hardware and subsystems
+    private final RobotInit robot;
     private final intakeSubsystem intake;
     private final ShooterTurretSubsystem shooter;
 
-    private final DcMotor frontLeft;
-    private final DcMotor frontRight;
-    private final DcMotor backLeft;
-    private final DcMotor backRight;
+    // Alliance
+    private final boolean isBlue;
 
-    private final AprilTagProcessor aprilTag;
-    private final VisionPortal visionPortal;
-
+    // Timers
     private final ElapsedTime driveTimer = new ElapsedTime();
+    private final ElapsedTime flywheelTimer = new ElapsedTime();
     private final ElapsedTime feedTimer = new ElapsedTime();
     private final ElapsedTime cooldownTimer = new ElapsedTime();
 
+    // Drive settings
     private static final double DRIVE_POWER = 0.4;
-    private static final double DRIVE_TIME = 0.1;
+    private static final double DRIVE_TIME = 0.5;
 
+    // Flywheel delay
+    private static final double FLYWHEEL_DELAY = 4.0;
+
+    // Shooting settings
     private static final double BALL_FEED_TIME = 0.4;
     private static final double BALL_INTERVAL = 0.7;
 
+    // State variables
     private boolean driveFinished = false;
-    private boolean feeding = false;
-    private boolean hasFed = false;
-    private boolean autoStarted = false;
     private boolean shootingEnabled = false;
-    private boolean visionClosed = false;
+    private boolean flywheelTimerStarted = false;
+    private boolean flywheelReady = false;
+    private boolean hasFed = false;
+    private boolean feeding = false;
+
+    // AprilTag vision
+    private AprilTagProcessor aprilTag;
+    private VisionPortal visionPortal;
 
     public AprilTagAutoSubsystem(
             HardwareMap hardwareMap,
             intakeSubsystem intake,
-            ShooterTurretSubsystem shooter) {
+            ShooterTurretSubsystem shooter,
+            boolean isBlue,
+            RobotInit robot) {
 
         this.intake = intake;
         this.shooter = shooter;
-
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        this.isBlue = isBlue;
+        this.robot = robot;
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setTagLibrary(
@@ -72,78 +80,77 @@ public class AprilTagAutoSubsystem {
                 .build();
     }
 
+    // Starts autonomous
     public void startAuto() {
+
+        stopDrive();
 
         shooter.startFlywheel();
 
-        // Keep outer and middle intake running.
         intake.runOuterAndMiddle(1.0);
-
-        // Inner intake starts off.
         intake.runInner(0.0);
 
+        driveFinished = false;
         shootingEnabled = false;
+
+        flywheelTimerStarted = false;
+        flywheelReady = false;
+
         hasFed = false;
         feeding = false;
 
-        driveFinished = false;
-
-        // Start the 100ms drive timer.
         driveTimer.reset();
-
-        autoStarted = true;
     }
 
-    public void setShootingEnabled(boolean enabled) {
-
-        shootingEnabled = enabled;
-
-        if (!enabled) {
-            intake.runInner(0.0);
-            feeding = false;
-        }
-
-        if (enabled) {
-            hasFed = false;
-            cooldownTimer.reset();
-        }
-    }
-
+    // Main autonomous loop
     public void update() {
 
-        if (!autoStarted) {
-            return;
-        }
-
-        // Outer and middle intake ALWAYS run.
+        // Keep outer and middle intake running
         intake.runOuterAndMiddle(1.0);
 
-        // Drive forward at 40% for 100ms.
+        // STEP 1: Drive forward using only the two back wheels
         if (!driveFinished) {
 
             if (driveTimer.seconds() < DRIVE_TIME) {
 
-                frontLeft.setPower(DRIVE_POWER);
-                frontRight.setPower(DRIVE_POWER);
-                backLeft.setPower(DRIVE_POWER);
-                backRight.setPower(DRIVE_POWER);
+                robot.backLeft.setPower(DRIVE_POWER);
+                robot.backRight.setPower(DRIVE_POWER);
 
             } else {
 
                 stopDrive();
                 driveFinished = true;
+
+                // Start the flywheel delay
+                flywheelTimer.reset();
+                flywheelTimerStarted = true;
             }
 
             return;
         }
 
-        // Wait until shooting is enabled.
+        // STEP 2: Wait 4 seconds for flywheel spin-up
+        if (!flywheelReady) {
+
+            if (flywheelTimerStarted &&
+                    flywheelTimer.seconds() >= FLYWHEEL_DELAY) {
+
+                flywheelReady = true;
+
+            } else {
+                return;
+            }
+        }
+
+        // STEP 3: Wait until shooting is enabled
         if (!shootingEnabled) {
             return;
         }
 
-        boolean targetVisible = isBlueScorableCellVisible();
+        // STEP 4: Check for the correct alliance AprilTag
+        boolean targetVisible = isCorrectAllianceTargetVisible();
 
+        // STEP 5: Feed while the target is visible
         if (feeding) {
 
             if (!targetVisible ||
@@ -151,12 +158,14 @@ public class AprilTagAutoSubsystem {
 
                 intake.runInner(0.0);
                 feeding = false;
+                cooldownTimer.reset();
+
+            } else {
+
+                intake.runInner(1.0);
             }
 
-            return;
-        }
-
-        if (targetVisible &&
+        } else if (targetVisible &&
                 (!hasFed || cooldownTimer.seconds() >= BALL_INTERVAL)) {
 
             intake.runInner(1.0);
@@ -165,14 +174,13 @@ public class AprilTagAutoSubsystem {
             hasFed = true;
 
             feedTimer.reset();
-            cooldownTimer.reset();
         }
     }
 
-    private boolean isBlueScorableCellVisible() {
+    // Detect the correct alliance AprilTag cluster
+    private boolean isCorrectAllianceTargetVisible() {
 
-        List<AprilTagDetection> detections =
-                aprilTag.getDetections();
+        List<AprilTagDetection> detections = aprilTag.getDetections();
 
         for (AprilTagDetection detection : detections) {
 
@@ -182,12 +190,17 @@ public class AprilTagAutoSubsystem {
                         (AprilTagClusterDetection) detection;
 
                 if (cluster.metadata != null &&
-                        cluster.metadata.name != null &&
-                        cluster.metadata.name.startsWith("B") &&
-                        detection.ftcPose != null &&
-                        Math.abs(detection.ftcPose.roll) < 90) {
+                        cluster.metadata.name != null) {
 
-                    return true;
+                    String name = cluster.metadata.name;
+
+                    boolean correctAlliance = isBlue
+                            ? name.startsWith("B")
+                            : name.startsWith("R");
+
+                    if (correctAlliance) {
+                        return true;
+                    }
                 }
             }
         }
@@ -195,14 +208,24 @@ public class AprilTagAutoSubsystem {
         return false;
     }
 
+    // Stop all drivetrain motors
     private void stopDrive() {
 
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
+        robot.frontLeft.setPower(0);
+        robot.frontRight.setPower(0);
+        robot.backLeft.setPower(0);
+        robot.backRight.setPower(0);
     }
 
+    public boolean isDriveFinished() {
+        return driveFinished;
+    }
+
+    public void setShootingEnabled(boolean enabled) {
+        shootingEnabled = enabled;
+    }
+
+    // Stop autonomous
     public void stop() {
 
         stopDrive();
@@ -212,14 +235,9 @@ public class AprilTagAutoSubsystem {
 
         feeding = false;
         shootingEnabled = false;
-        autoStarted = false;
 
-        if (!visionClosed) {
+        if (visionPortal != null) {
             visionPortal.close();
-            visionClosed = true;
         }
-    }
-    public boolean isDriveFinished() {
-        return driveFinished;
     }
 }

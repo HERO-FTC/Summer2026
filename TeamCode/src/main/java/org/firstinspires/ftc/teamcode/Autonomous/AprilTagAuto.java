@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.components.intakeSubsystem;
 import org.firstinspires.ftc.teamcode.components.ShooterTurretSubsystem;
 import org.firstinspires.ftc.teamcode.components.AprilTagAutoSubsystem;
 
-@Autonomous(name = "AprilTag Auto", group = "Competition")
+@Autonomous(name = "Blue AprilTag Auto", group = "Competition")
 public class AprilTagAuto extends LinearOpMode {
 
     private AprilTagAutoSubsystem autoSubsystem;
@@ -17,7 +17,7 @@ public class AprilTagAuto extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        // Initialize robot hardware
+        // Initialize existing robot configuration
         RobotInit robot = new RobotInit(hardwareMap);
 
         // Initialize intake
@@ -27,14 +27,16 @@ public class AprilTagAuto extends LinearOpMode {
         ShooterTurretSubsystem shooter =
                 new ShooterTurretSubsystem(robot);
 
-        // Initialize autonomous subsystem
+        // Initialize BLUE autonomous
         autoSubsystem = new AprilTagAutoSubsystem(
                 hardwareMap,
                 intake,
-                shooter
+                shooter,
+                true,
+                robot
         );
 
-        telemetry.addLine("AprilTag Auto Initialized");
+        telemetry.addLine("BLUE AprilTag Auto Initialized");
         telemetry.addLine("Waiting for start...");
         telemetry.update();
 
@@ -45,25 +47,21 @@ public class AprilTagAuto extends LinearOpMode {
             return;
         }
 
-        // Start flywheel, intakes, and initial movement
         autoSubsystem.startAuto();
 
-        // Wait for 100ms drive movement to finish
         while (opModeIsActive() &&
                 !autoSubsystem.isDriveFinished()) {
 
             autoSubsystem.update();
         }
 
-        // Enable AprilTag shooting
         autoSubsystem.setShootingEnabled(true);
 
-        // Main autonomous loop
         while (opModeIsActive()) {
 
             autoSubsystem.update();
 
-            telemetry.addData("Status", "Running");
+            telemetry.addData("Alliance", "BLUE");
             telemetry.addData("Shooting", "Enabled");
             telemetry.addData(
                     "Drive Finished",
@@ -73,7 +71,6 @@ public class AprilTagAuto extends LinearOpMode {
             telemetry.update();
         }
 
-        // Stop all mechanisms
         autoSubsystem.stop();
     }
 }
