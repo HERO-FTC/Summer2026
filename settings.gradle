@@ -1,8 +1,28 @@
+
 pluginManagement {
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+
+    repositories {
+        google()
+        mavenCentral()
+
+        // Dairy Foundation - Sloth dependency
+        maven {
+            url = uri('https://repo.dairy.foundation/releases')
+        }
+
+        // ByLazar Panels
+        maven {
+            url = uri('https://mymaven.bylazar.com/releases')
+        }
     }
 }
 
