@@ -15,9 +15,9 @@ public class ShooterTurretSubsystem {
     private final Servo flowerServo;
     private final CRServo turret;
 
-    private static final double FLOWER_BAR_UP = 0.97;
-    private static final double FLOWER_BAR_DOWN = 0.58;
-    private static final double TARGET_RPM = 6000 * 0.47;
+    private static final double FLOWER_BAR_UP = 0.47;
+    private static final double FLOWER_BAR_DOWN = 0.07;
+    private static final double TARGET_RPM = 6000 * 0.35;
 
     private final double ticksPerRev;
 

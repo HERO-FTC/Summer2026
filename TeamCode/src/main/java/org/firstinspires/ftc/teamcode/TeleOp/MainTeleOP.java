@@ -109,11 +109,11 @@ public class MainTeleOP extends LinearOpMode {
                 // Gamepad 2 left stick: Set flower bar position.
                 // Push down once to move down; release to hold position.
                 // Push up once to move up; release to hold position.
-                double flowerInput = gamepad2.left_stick_y;
+                double flowerInput = gamepad2.right_trigger;
 
-                if (flowerInput > 0.5) {
+                if (flowerInput > 0.2) {
                     shooter.flowerBarDown();
-                } else if (flowerInput < -0.5) {
+                } else{
                     shooter.flowerBarUp();
                 }
 
