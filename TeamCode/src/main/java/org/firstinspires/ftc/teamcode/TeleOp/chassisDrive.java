@@ -44,6 +44,13 @@ public class chassisDrive extends LinearOpMode {
     boolean inOn = false;
     boolean lastA = false;
 
+    //Trigger
+
+    double trigTargetVelocity = 2000.0; // ticks per second
+    private DcMotorEx trig = null;
+    boolean trigOn = false;
+    boolean lastC = false;
+
     // Outtake
 
     double outTargetVelocity = 2800.0; // ticks per second
@@ -84,6 +91,16 @@ public class chassisDrive extends LinearOpMode {
         in.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 //        in.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         in.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+        //Trigger
+        trig = hardwareMap.get(DcMotorEx.class, "o1");
+
+        trig.setDirection(DcMotorEx.Direction.REVERSE);
+
+        trig.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+//        trig.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        trig.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
         // Outtake
         out1 = hardwareMap.get(DcMotorEx.class, "o1");
 
@@ -180,6 +197,21 @@ public class chassisDrive extends LinearOpMode {
             in.setPower(0);
         }
 
+
+        //Trigger
+        boolean c = gamepad1.a;
+        if (c && !lastC) {
+            trigOn = !trigOn;
+        }
+        lastC = c;
+
+        if (trigOn) {
+//            trig1.setVelocity(trigTargetVelocity);
+            trig.setPower(0.8);
+        } else {
+            trig.setPower(0);
+        }
+
         //Outtake
 
         boolean b = gamepad1.y;
@@ -210,7 +242,13 @@ public class chassisDrive extends LinearOpMode {
         telemetry.addData("Outtake", outOn ? "ON" : "OFF");
 //        telemetry.addData("Target", outTargetVelocity);
 //        telemetry.addData("o1 vel", out1.getVelocity());
-
         telemetry.update();
+
+        telemetry.addData("Trigger", trigOn ? "ON" : "OFF");
+//        telemetry.addData("Target", trigTargetVelocity);
+//        telemetry.addData("o1 vel", trig.getVelocity());
+        telemetry.update();
+
+
     }
 }
