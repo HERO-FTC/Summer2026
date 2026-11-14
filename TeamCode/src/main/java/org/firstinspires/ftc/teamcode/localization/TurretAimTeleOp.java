@@ -13,9 +13,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 @TeleOp(name = "Turret Auto Aim", group = "Sensor")
 public class TurretAimTeleOp extends OpMode {
 
-    static final double SERVO_LEFT_POS   = 0.1;
-    static final double SERVO_RIGHT_POS  = 1.0;
-    static final double SERVO_CENTER_POS = 0.55;
+    static final double SERVO_LEFT_POS   = 1;
+    static final double SERVO_RIGHT_POS  = 0.0;
+    static final double SERVO_CENTER_POS = 0.48;
     static final double TURRET_TRAVEL_DEG = 150.0;
 
     static final double TURRET_OFFSET_X_IN = -3.25;
