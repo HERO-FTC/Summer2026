@@ -199,4 +199,4 @@ public class AxonTurretAutoAim extends OpMode {
         double pos = RIGHT_LIMIT_SERVO_POS + fraction * (LEFT_LIMIT_SERVO_POS - RIGHT_LIMIT_SERVO_POS);
         return Range.clip(pos, 0.0, 1.0);
     }
-}
+}//credits claude for smoothening the turret and adding telementary(PWM VALUES)
