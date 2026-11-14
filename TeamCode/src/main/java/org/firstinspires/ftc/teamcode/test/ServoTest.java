@@ -19,7 +19,7 @@ public class ServoTest extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        servo = hardwareMap.get(Servo.class, "turret");
+        servo = hardwareMap.get(Servo.class, "turretServo");
 
         servo.setPosition(position);
 
