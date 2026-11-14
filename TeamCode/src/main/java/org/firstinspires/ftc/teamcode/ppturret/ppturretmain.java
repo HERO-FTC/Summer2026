@@ -5,6 +5,9 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.PwmControl;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
@@ -18,6 +21,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * ROBOT HEADING and TURRET HEADING (same convention for both):
  *   0 at the start (pointing forward). 90 = a quarter turn to the right, -90 = a quarter turn
  *   to the left. Range is -180..+180, so a half turn reads 180.
+ *
+ * TURRET HEADING is shown two ways:
+ *   Relative to robot = turret angle compared to the front of the robot.
+ *   On field          = robot heading + turret relative heading (where the turret really points).
  *
  * Gamepad 1 A: reset robot position to (0,0) and robot heading to 0.
  * Gamepad 1 B: set the turret's current direction as 0 (do this with the turret pointing forward).
@@ -53,6 +60,7 @@ public class ppturretmain extends LinearOpMode {
 
     private Follower follower;
     private AnalogInput turretEncoder;
+    private Servo turretAim;   // only used by the temporary power test
 
     @Override
     public void runOpMode() {
@@ -64,8 +72,16 @@ public class ppturretmain extends LinearOpMode {
 
         turretEncoder = hardwareMap.get(AnalogInput.class, TURRET_ENCODER_NAME);
 
+        // TEMPORARY power test: the servo name must match your robot configuration.
+        turretAim = hardwareMap.get(Servo.class, "turretAim");
+        if (turretAim instanceof ServoImplEx) {
+            ((ServoImplEx) turretAim).setPwmRange(new PwmControl.PwmRange(500, 2500));
+        }
+        // No position is sent here, so the turret stays free until you press a test button.
+
         boolean previousA = false;
         boolean previousB = false;
+        String servoTestStatus = "not commanded (servo free)";
 
         telemetry.addLine("Ready");
         telemetry.addLine("Gamepad 1 A: reset robot position and heading");
@@ -96,6 +112,20 @@ public class ppturretmain extends LinearOpMode {
             }
             previousB = bPressed;
 
+            // TEMPORARY power test: X = 0.5, Y = 0.3, right bumper = 0.7.
+            // Once a button has been pressed, the servo keeps holding that position until you
+            // stop the OpMode, so the turret will resist being turned by hand.
+            if (gamepad1.x) {
+                turretAim.setPosition(0.5);
+                servoTestStatus = "commanded 0.5";
+            } else if (gamepad1.y) {
+                turretAim.setPosition(0.3);
+                servoTestStatus = "commanded 0.3";
+            } else if (gamepad1.right_bumper) {
+                turretAim.setPosition(0.7);
+                servoTestStatus = "commanded 0.7";
+            }
+
             // ---------------- Robot pose ----------------
             Pose pose = follower.getPose();
             double robotX = X_SIGN * pose.getX();
@@ -106,17 +136,36 @@ public class ppturretmain extends LinearOpMode {
                     HEADING_SIGN * (Math.toDegrees(pose.getHeading()) - START_HEADING_DEG));
 
             // ---------------- Turret heading ----------------
-            // Same convention as the robot heading: right is positive, left is negative, -180..180.
-            double turretHeadingDeg = normalize180(
-                    (readFeedbackDeg() - turretZeroDeg) * TURRET_DIRECTION / SERVO_TO_TURRET_RATIO);
+            // Relative to the robot's front: 0 = straight ahead, right is positive, left is negative.
+            double turretHeadingDeg = getTurretHeadingDeg(turretZeroDeg);
+
+            // Direction the turret points on the field, measured the same way as the robot heading
+            // (0 = the robot's starting direction, right is positive, -180..180).
+            double turretFieldHeadingDeg = normalize180(robotHeadingDeg + turretHeadingDeg);
 
             // ---------------- Telemetry ----------------
             telemetry.addData("Robot X (in)", "%.2f", robotX);
             telemetry.addData("Robot Y (in)", "%.2f", robotY);
             telemetry.addData("Robot Heading (deg)", "%.1f", robotHeadingDeg);
-            telemetry.addData("Turret Heading (deg)", "%.1f", turretHeadingDeg);
+            telemetry.addLine();
+            telemetry.addData("Turret Heading, relative to robot (deg)", "%.1f", turretHeadingDeg);
+            telemetry.addData("Turret Heading, on field (deg)", "%.1f", turretFieldHeadingDeg);
+            telemetry.addLine();
+            // Debug lines for checking the feedback wire. Delete once the turret reads correctly.
+            telemetry.addData("DEBUG feedback voltage (V)", "%.3f", turretEncoder.getVoltage());
+            telemetry.addData("DEBUG raw feedback angle (deg)", "%.1f", readFeedbackDeg());
+            telemetry.addData("DEBUG turret zero angle (deg)", "%.1f", turretZeroDeg);
+            telemetry.addData("DEBUG servo power test", servoTestStatus);
             telemetry.update();
         }
+    }
+
+    // Turret angle relative to the robot's front, -180..180 (right positive).
+    // The feedback angle wraps from 360 back to 0, so we wrap the difference to -180..180 FIRST,
+    // and only then divide by the gear ratio. That keeps the reading from jumping at the wrap point.
+    private double getTurretHeadingDeg(double zeroDeg) {
+        double servoDeltaDeg = normalize180(readFeedbackDeg() - zeroDeg);
+        return normalize180(servoDeltaDeg * TURRET_DIRECTION / SERVO_TO_TURRET_RATIO);
     }
 
     // Servo-side angle from the Axon feedback wire, 0..360.
