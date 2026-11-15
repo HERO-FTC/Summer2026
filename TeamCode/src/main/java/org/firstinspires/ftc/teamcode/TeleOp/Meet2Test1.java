@@ -14,6 +14,7 @@ public class Meet2Test1 extends LinearOpMode {
     private DcMotor backLeft;
     private DcMotor backRight;
     private DcMotor intake;
+    private DcMotor outtake;
 
     @Override
     public void runOpMode() {
@@ -25,8 +26,8 @@ public class Meet2Test1 extends LinearOpMode {
         backRight = hardwareMap.get(DcMotor.class, "backRight");
 
         // Initialize intake motor.
-        intake = hardwareMap.get(DcMotor.class, "intakeOuter");
-
+        intake = hardwareMap.get(DcMotor.class, "in");
+        outtake = hardwareMap.get(DcMotor.class, "ot");
         // Set motor directions.
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -35,7 +36,7 @@ public class Meet2Test1 extends LinearOpMode {
         backRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
-
+        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
         // Set zero power behavior.
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -58,12 +59,16 @@ public class Meet2Test1 extends LinearOpMode {
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         boolean intakeOn = false;
+        boolean outtakeOn = false;
 
         boolean previousA = false;
         boolean previousUp = false;
         boolean previousDown = false;
+        boolean previousLeft = false;
+        boolean previousB = false;
 
         double intakePower = 0.50;
+        double outtakePower = .75;
 
         telemetry.addLine("BioBuzz Drive + Intake Test");
         telemetry.addLine("Gamepad 1 Controls:");
@@ -106,6 +111,19 @@ public class Meet2Test1 extends LinearOpMode {
                 boolean currentA = gamepad1.a;
                 boolean currentUp = gamepad1.dpad_up;
                 boolean currentDown = gamepad1.dpad_down;
+                boolean currentB = gamepad1.b;
+                boolean currentLeft = gamepad1.dpad_left;
+
+                if (currentLeft && !previousLeft) {
+                    outtakeOn = !outtakeOn;
+                }
+                if (currentB && !previousB) {
+                    outtake.setPower(outtakePower);
+                }
+                if (currentLeft && !previousLeft) {
+                    outtake.setPower(0);
+                }
+
 
                 if (currentA && !previousA) {
                     intakeOn = !intakeOn;
@@ -124,6 +142,7 @@ public class Meet2Test1 extends LinearOpMode {
                 previousA = currentA;
                 previousUp = currentUp;
                 previousDown = currentDown;
+                previousLeft = currentLeft;
 
                 // TELEMETRY
                 telemetry.addLine("=== DRIVETRAIN ===");
@@ -138,16 +157,22 @@ public class Meet2Test1 extends LinearOpMode {
                 telemetry.addData("Applied Power",
                         "%.2f", intakeOn ? intakePower : 0.0);
 
+                telemetry.addLine("=== OUTTAKE ===");
+                telemetry.addData("Applied Power",
+                        "%.2f", outtakeOn ? outtakePower : 0.0);
+
                 telemetry.update();
             }
         } finally {
 
             // Stop all five motors.
             frontLeft.setPower(0);
-            frontRight.setPower(0);
             backLeft.setPower(0);
+            frontRight.setPower(0);
             backRight.setPower(0);
             intake.setPower(0);
+            outtake.setPower(0);
         }
     }
 }
+  
