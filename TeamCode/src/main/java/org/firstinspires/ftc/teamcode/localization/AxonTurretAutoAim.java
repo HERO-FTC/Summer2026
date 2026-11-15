@@ -40,15 +40,19 @@ public class AxonTurretAutoAim extends OpMode {
     static final double TURRET_OFFSET_Y_IN = 0.0;
     static final double AIM_TRIM_DEG = 0.0;
 
-    // ---- Smoothing tuning ----
-    // Low-pass time constant (seconds). Higher = smoother but laggier. Try 0.05 - 0.15.
-    static final double SMOOTHING_TAU_SEC = 0.08;
+    // Low-pass time constant (seconds). Higher = smoother but laggier.
+    // Pinpoint pose is already clean, so keep this small for a fast response.
+    static final double SMOOTHING_TAU_SEC = 0.02;
     // Max turret speed in deg/sec. Prevents sudden snaps.
     static final double MAX_SLEW_DEG_PER_SEC = 360.0;
-    // Ignore angle changes smaller than this (deg) so the servo stops hunting.
-    static final double DEADBAND_DEG = 0.4;
+    // Ignore angle errors smaller than this (deg) so the servo stops hunting.
+    static final double DEADBAND_DEG = 1.0;
+    // Only send a new servo position if it changed by at least this much (0.005 = ~0.9 deg).
+    static final double SERVO_WRITE_TOLERANCE = 0.005;
     // Manual D-pad speed in deg/sec.
     static final double MANUAL_SPEED_DEG_PER_SEC = 60.0;
+    // Stop updating the aim when the turret pivot is this close to the target (atan2 gets unstable).
+    static final double MIN_AIM_DISTANCE_IN = 6.0;
 
     private GoBildaPinpointDriver pinpoint;
     private ServoImplEx turretServo;
@@ -139,23 +143,26 @@ public class AxonTurretAutoAim extends OpMode {
             double dy = TARGET_Y_IN - pivotY;
             distanceToTargetIn = Math.hypot(dx, dy);
 
-            double fieldAngleDeg = Math.toDegrees(Math.atan2(dy, dx));
-            double rawAngleDeg = AngleUnit.normalizeDegrees(fieldAngleDeg - headingDeg + AIM_TRIM_DEG);
+            // Right on top of the target the angle is meaningless, so hold the current aim.
+            if (distanceToTargetIn > MIN_AIM_DISTANCE_IN) {
+                double fieldAngleDeg = Math.toDegrees(Math.atan2(dy, dx));
+                double rawAngleDeg = AngleUnit.normalizeDegrees(fieldAngleDeg - headingDeg + AIM_TRIM_DEG);
 
-            // Clamp BEFORE smoothing so the +/-180 wrap can never fling the turret across.
-            targetRelAngleDeg = Range.clip(rawAngleDeg, RIGHT_LIMIT_ANGLE_DEG, LEFT_LIMIT_ANGLE_DEG);
+                // Pick a reachable angle without flipping sides when the target is behind the robot.
+                targetRelAngleDeg = pickReachableAngle(rawAngleDeg, commandedAngleDeg);
 
-            // 1) Low-pass filter toward the target
-            double alpha = 1.0 - Math.exp(-dt / SMOOTHING_TAU_SEC);
-            double desired = commandedAngleDeg + alpha * (targetRelAngleDeg - commandedAngleDeg);
+                // 1) Low-pass filter toward the target
+                double alpha = 1.0 - Math.exp(-dt / SMOOTHING_TAU_SEC);
+                double desired = commandedAngleDeg + alpha * (targetRelAngleDeg - commandedAngleDeg);
 
-            // 2) Deadband: don't chase tiny changes
-            if (Math.abs(desired - commandedAngleDeg) >= DEADBAND_DEG
-                    || Math.abs(targetRelAngleDeg - commandedAngleDeg) >= DEADBAND_DEG * 3) {
-                // 3) Slew-rate limit
+                // 2) Slew-rate limit
                 double maxStep = MAX_SLEW_DEG_PER_SEC * dt;
                 double step = Range.clip(desired - commandedAngleDeg, -maxStep, maxStep);
-                commandedAngleDeg += step;
+
+                // 3) Deadband on the real error (not the filtered step)
+                if (Math.abs(targetRelAngleDeg - commandedAngleDeg) > DEADBAND_DEG) {
+                    commandedAngleDeg += step;
+                }
             }
         } else {
             if (gamepad1.dpad_left)  commandedAngleDeg += MANUAL_SPEED_DEG_PER_SEC * dt;
@@ -174,6 +181,7 @@ public class AxonTurretAutoAim extends OpMode {
         telemetry.addData("Target Angle", "%.1f deg", targetRelAngleDeg);
         telemetry.addData("Commanded Angle", "%.1f deg", commandedAngleDeg);
         telemetry.addData("Servo Pos", "%.3f", servoPos);
+        telemetry.addData("Loop ms", "%.1f", dt * 1000.0);
         telemetry.update();
     }
 
@@ -184,9 +192,19 @@ public class AxonTurretAutoAim extends OpMode {
         ));
     }
 
+    // If the target is within the turret's range, use it. If it is behind the robot (unreachable),
+    // don't snap to the "closer" limit, because that flips at +/-180 and whips the turret across.
+    // Instead stay on the side the turret is already on until the target comes back into range.
+    private double pickReachableAngle(double rawDeg, double currentDeg) {
+        if (rawDeg >= RIGHT_LIMIT_ANGLE_DEG && rawDeg <= LEFT_LIMIT_ANGLE_DEG) {
+            return rawDeg;
+        }
+        return currentDeg >= 0 ? LEFT_LIMIT_ANGLE_DEG : RIGHT_LIMIT_ANGLE_DEG;
+    }
+
     // Only write to the servo when the position meaningfully changes.
     private void sendServo(double pos) {
-        if (Math.abs(pos - lastSentServoPos) >= 0.001) {
+        if (Math.abs(pos - lastSentServoPos) >= SERVO_WRITE_TOLERANCE) {
             turretServo.setPosition(pos);
             lastSentServoPos = pos;
         }
