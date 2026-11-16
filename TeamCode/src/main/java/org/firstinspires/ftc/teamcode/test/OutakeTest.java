@@ -3,35 +3,53 @@ package org.firstinspires.ftc.teamcode.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-@TeleOp(name = "Single Motor Test", group = "Components")
+@TeleOp(name = "Kicker + Intake + Outtake Test", group = "Components")
 public class OutakeTest extends LinearOpMode {
 
-    private DcMotorEx motor;
+    private CRServo kicker;
+    private DcMotorEx intake;
+    private DcMotorEx outtake;
 
-    double motorPower = 0.50;
-    static final double POWER_STEP = 0.05;
+    private boolean kickerOn = true;
+    private boolean intakeOn = false;
+    private boolean outtakeOn = false;
 
-    boolean motorOn = false;
+    private boolean kickerReversed = false;
 
-    boolean lastA = false;
-    boolean lastUp = false;
-    boolean lastDown = false;
+    private boolean lastA = false;
+    private boolean lastX = false;
+    private boolean lastY = false;
+    private boolean lastB = false;
 
     @Override
     public void runOpMode() {
 
-        motor = hardwareMap.get(DcMotorEx.class, "o1");
+        kicker = hardwareMap.get(CRServo.class, "kick");
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        outtake = hardwareMap.get(DcMotorEx.class, "outake");
 
-        motor.setDirection(DcMotorEx.Direction.FORWARD);
-        motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
-        motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        // Kicker configuration
+        kicker.setDirection(CRServo.Direction.FORWARD);
 
-        telemetry.addLine("Single Motor Test");
-        telemetry.addLine("A = Toggle motor");
-        telemetry.addLine("D-pad Up/Down = Adjust power");
+        // Intake configuration
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        intake.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        intake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        // Outtake configuration
+        outtake.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtake.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        outtake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        telemetry.addLine("Kicker + Intake + Outtake Test");
+        telemetry.addLine("A = Toggle Kicker");
+        telemetry.addLine("X = Toggle Intake");
+        telemetry.addLine("Y = Reverse Kicker / Shoot");
+        telemetry.addLine("B = Toggle Outtake");
         telemetry.update();
 
         waitForStart();
@@ -39,42 +57,65 @@ public class OutakeTest extends LinearOpMode {
         while (opModeIsActive()) {
 
             boolean a = gamepad1.a;
-            boolean up = gamepad1.dpad_up;
-            boolean down = gamepad1.dpad_down;
+            boolean x = gamepad1.x;
+            boolean y = gamepad1.y;
+            boolean b = gamepad1.b;
 
-            // Toggle motor on/off
+            // Toggle kicker
             if (a && !lastA) {
-                motorOn = !motorOn;
+                kickerOn = !kickerOn;
             }
 
-            // Adjust motor power
-            if (up && !lastUp) {
-                motorPower += POWER_STEP;
+            // Toggle intake
+            if (x && !lastX) {
+                intakeOn = !intakeOn;
             }
 
-            if (down && !lastDown) {
-                motorPower -= POWER_STEP;
+            // Reverse kicker for shooting
+            if (y && !lastY) {
+                kickerReversed = !kickerReversed;
             }
 
-            // Keep power between 0 and 1
-            motorPower = Math.max(0.0, Math.min(1.0, motorPower));
-            motorPower = Math.round(motorPower * 100.0) / 100.0;
+            // Toggle outtake
+            if (b && !lastB) {
+                outtakeOn = !outtakeOn;
+            }
 
             // Save button states
             lastA = a;
-            lastUp = up;
-            lastDown = down;
+            lastX = x;
+            lastY = y;
+            lastB = b;
 
-            // Apply power
-            motor.setPower(motorOn ? motorPower : 0);
+            // Kicker direction and power
+            kicker.setDirection(
+                    kickerReversed
+                            ? CRServo.Direction.REVERSE
+                            : CRServo.Direction.FORWARD
+            );
+
+            kicker.setPower(kickerOn ? 1.0 : 0.0);
+
+            // Intake at 100%
+            intake.setPower(intakeOn ? 1.0 : 0.0);
+
+            // Outtake at 100%
+            outtake.setPower(outtakeOn ? 0.76 : 0.0);
 
             // Telemetry
-            telemetry.addData("Motor", motorOn ? "ON" : "OFF");
-            telemetry.addData("Power", "%.0f%%", motorPower * 100);
+            telemetry.addData("Kicker", kickerOn ? "ON" : "OFF");
+            telemetry.addData("Kicker Direction",
+                    kickerReversed ? "SHOOT (+100%)" : "BACKWARD (-100%)");
+
+            telemetry.addData("Intake", intakeOn ? "ON (100%)" : "OFF");
+            telemetry.addData("Outtake", outtakeOn ? "ON (100%)" : "OFF");
+
             telemetry.update();
         }
 
-        // Stop motor when OpMode ends
-        motor.setPower(0);
+        // Stop everything
+        kicker.setPower(0);
+        intake.setPower(0);
+        outtake.setPower(0);
     }
 }
