@@ -46,8 +46,11 @@ public class Constants {
 
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(4)
-            .strafePodX(3.5)//small changes only
+            // Pinpoint offsets, converted from mm to inches:
+            //   X offset -162.56 mm = -6.4 in  -> forwardPodY
+            //   Y offset -114.30 mm = -4.5 in  -> strafePodX
+            .forwardPodY(-6.4)
+            .strafePodX(-4.5)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
             .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
@@ -55,10 +58,7 @@ public class Constants {
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
     public static PathConstraints pathConstraints = new PathConstraints(
-            0.99,
-            100,
-            1,
-            1);
+            0.99, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
