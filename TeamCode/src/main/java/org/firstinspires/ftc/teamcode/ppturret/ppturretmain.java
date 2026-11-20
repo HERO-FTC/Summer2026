@@ -72,7 +72,7 @@ public class ppturretmain extends LinearOpMode {
 
         turretEncoder = hardwareMap.get(AnalogInput.class, TURRET_ENCODER_NAME);
 
-        // TEMPORARY power test: the servo name must match your robot configuration.
+        // TEMPORARY power test: the servo name must match your robot configuration (turretAim is servo port 2, encoder has not been wired yet).
         turretAim = hardwareMap.get(Servo.class, "turretAim");
         if (turretAim instanceof ServoImplEx) {
             ((ServoImplEx) turretAim).setPwmRange(new PwmControl.PwmRange(500, 2500));
