@@ -19,10 +19,13 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
         DriveSystemV2 drive = new DriveSystemV2(robot);
         IntakeSubsystemV2 intake = new IntakeSubsystemV2(robot);
-        ShooterTurretSubsystemV2 shooter = new ShooterTurretSubsystemV2(robot);
+        ShooterTurretSubsystemV2 shooter =
+                new ShooterTurretSubsystemV2(robot);
 
         boolean intakeRunning = false;
         boolean outtakeRunning = false;
+        boolean kickerRunning = false;
+
         boolean brakeEngaged = false;
         boolean stopperDown = false;
         boolean reverseEverything = false;
@@ -31,6 +34,9 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean previousX = false;
         boolean previousY = false;
         boolean previousRB = false;
+
+        boolean previousDpadDown = false;
+
         boolean previousStopperDown = false;
         boolean previousStopperUp = false;
 
@@ -43,6 +49,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
             while (opModeIsActive()) {
 
+                // DRIVE CONTROL
                 double forward = -gamepad1.left_stick_y;
                 double strafe = gamepad1.left_stick_x;
                 double turn = gamepad1.right_stick_x;
@@ -65,7 +72,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
                     outtakeRunning = !outtakeRunning;
                 }
 
-                // GAMEPAD 2 Y - REVERSE EVERYTHING
+                // GAMEPAD 2 Y - REVERSE INTAKE
                 if (gamepad2.y && !previousY) {
                     reverseEverything = !reverseEverything;
                 }
@@ -73,6 +80,11 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 // GAMEPAD 2 RB - BRAKE ON/OFF
                 if (gamepad2.right_bumper && !previousRB) {
                     brakeEngaged = !brakeEngaged;
+                }
+
+                // GAMEPAD 2 D-PAD DOWN - KICKER ON/OFF
+                if (gamepad2.dpad_down && !previousDpadDown) {
+                    kickerRunning = !kickerRunning;
                 }
 
                 // GAMEPAD 1 RB - STOPPER DOWN
@@ -91,6 +103,8 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 previousY = gamepad2.y;
                 previousRB = gamepad2.right_bumper;
 
+                previousDpadDown = gamepad2.dpad_down;
+
                 previousStopperDown = gamepad1.right_bumper;
                 previousStopperUp = gamepad1.left_bumper;
 
@@ -108,6 +122,11 @@ public class MainTeleOp11_20 extends LinearOpMode {
                     shooter.stopOuttake();
                 }
 
+                // KICKER CONTROL
+                shooter.runKicker(
+                        kickerRunning ? -1.0 : 0.0
+                );
+
                 // BRAKE CONTROL
                 shooter.setBrake(brakeEngaged);
 
@@ -115,15 +134,41 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 drive.setStopper(stopperDown);
 
                 // TELEMETRY
-                telemetry.addData("Intake", intakeRunning ? "ON" : "OFF");
-                telemetry.addData("Outtake", outtakeRunning ? "ON" : "OFF");
-                telemetry.addData("Brake", brakeEngaged ? "ENGAGED" : "RELEASED");
-                telemetry.addData("Stopper", stopperDown ? "DOWN" : "UP");
-                telemetry.addData("Reverse Everything", reverseEverything ? "ON" : "OFF");
+                telemetry.addData(
+                        "Intake",
+                        intakeRunning ?
+                                (reverseEverything ? "REVERSE" : "ON") : "OFF"
+                );
 
-                telemetry.addData("Kicker", "RUNNING BACKWARD");
-                telemetry.addData("Intake RPM", "%.1f", intake.getRPM());
-                telemetry.addData("Outtake RPM", "%.1f", shooter.getOuttakeRPM());
+                telemetry.addData(
+                        "Outtake",
+                        outtakeRunning ? "ON" : "OFF"
+                );
+
+                telemetry.addData(
+                        "Kicker",
+                        kickerRunning ? "RUNNING BACKWARD" : "OFF"
+                );
+
+                telemetry.addData(
+                        "Brake",
+                        brakeEngaged ? "ENGAGED" : "RELEASED"
+                );
+
+                telemetry.addData(
+                        "Stopper",
+                        stopperDown ? "DOWN" : "UP"
+                );
+
+                telemetry.addData(
+                        "Intake RPM",
+                        "%.1f", intake.getRPM()
+                );
+
+                telemetry.addData(
+                        "Outtake RPM",
+                        "%.1f", shooter.getOuttakeRPM()
+                );
 
                 telemetry.update();
             }
@@ -136,13 +181,3 @@ public class MainTeleOp11_20 extends LinearOpMode {
         }
     }
 }
-
-// GAMEPAD 2:
-// A - Intake ON/OFF
-// X - Outtake ON/OFF
-// Y - Reverse everything (motors only, NOT normal servos)
-// RB - Brake ON/OFF
-//
-// GAMEPAD 1:
-// RB - Stopper DOWN
-// LB - Stopper UP
