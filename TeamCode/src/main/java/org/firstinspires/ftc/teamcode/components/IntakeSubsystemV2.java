@@ -10,6 +10,8 @@ public class IntakeSubsystemV2 {
 
     private final DcMotorEx intake;
 
+    private static final double TARGET_RPM = 1150.0 * 0.99;
+
     private final double ticksPerRev;
 
     public IntakeSubsystemV2(RoboInit robot) {
@@ -28,13 +30,16 @@ public class IntakeSubsystemV2 {
     }
 
     public void run(double power) {
-        intake.setPower(
-                Math.max(-1.0, Math.min(1.0, power))
+
+        power = Math.max(-1.0, Math.min(1.0, power));
+
+        intake.setVelocity(
+                power * TARGET_RPM * ticksPerRev / 60.0
         );
     }
 
     public void stop() {
-        intake.setPower(0);
+        intake.setVelocity(0);
     }
 
     public double getRPM() {
