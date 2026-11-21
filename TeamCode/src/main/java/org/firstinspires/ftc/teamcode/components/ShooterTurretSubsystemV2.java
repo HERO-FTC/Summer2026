@@ -18,7 +18,7 @@ public class ShooterTurretSubsystemV2 {
     private static final double BRAKE_ON = 0.47;
     private static final double BRAKE_OFF = 0.51;
 
-    private static final double OUTTAKE_POWER = 0.74;
+    private static final double TARGET_RPM = 6000.0 * 0.35;
 
     private final double ticksPerRev;
 
@@ -49,17 +49,25 @@ public class ShooterTurretSubsystemV2 {
     }
 
     public void startOuttake() {
-        outtake.setPower(OUTTAKE_POWER);
+        setOuttakeRPM(TARGET_RPM);
+    }
+
+    public void setOuttakeRPM(double rpm) {
+
+        outtake.setVelocity(
+                rpm * ticksPerRev / 60.0
+        );
     }
 
     public void stopOuttake() {
-        outtake.setPower(0);
+        outtake.setVelocity(0);
     }
 
     public void runOuttake(double power) {
-        outtake.setPower(
-                Math.max(-1.0, Math.min(1.0, power))
-        );
+
+        power = Math.max(-1.0, Math.min(1.0, power));
+
+        setOuttakeRPM(power * TARGET_RPM);
     }
 
     public void setBrake(boolean engaged) {
