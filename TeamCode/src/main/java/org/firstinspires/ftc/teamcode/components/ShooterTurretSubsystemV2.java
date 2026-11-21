@@ -1,9 +1,11 @@
+
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.teamcode.config.RoboInit;
 
@@ -13,10 +15,12 @@ public class ShooterTurretSubsystemV2 {
     private final Servo brake;
     private final CRServo kicker;
 
-    // private final Servo turret;
-
     private static final double BRAKE_ON = 0.47;
     private static final double BRAKE_OFF = 0.51;
+
+    private static final double OUTTAKE_POWER = 0.74;
+
+    private final double ticksPerRev;
 
     public ShooterTurretSubsystemV2(RoboInit robot) {
 
@@ -24,16 +28,28 @@ public class ShooterTurretSubsystemV2 {
         brake = robot.brake;
         kicker = robot.kicker;
 
-        // turret = robot.turret;
+        ticksPerRev = outtake.getMotorType().getTicksPerRev();
 
-        outtake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        outtake.setZeroPowerBehavior(
+                DcMotor.ZeroPowerBehavior.BRAKE
+        );
 
-        // Automatically spin kicker backward when subsystem initializes
-        kicker.setPower(-1.0);
+        outtake.setMode(
+                DcMotor.RunMode.RUN_USING_ENCODER
+        );
+
+        // PIDF configuration (add coefficients later)
+        // outtake.setPIDFCoefficients(
+        //         DcMotor.RunMode.RUN_USING_ENCODER,
+        //         new PIDFCoefficients(P, I, D, F)
+        // );
+
+        // Kicker starts OFF
+        kicker.setPower(0);
     }
 
     public void startOuttake() {
-        outtake.setPower(74.0);
+        outtake.setPower(OUTTAKE_POWER);
     }
 
     public void stopOuttake() {
@@ -41,23 +57,33 @@ public class ShooterTurretSubsystemV2 {
     }
 
     public void runOuttake(double power) {
-        outtake.setPower(power);
+        outtake.setPower(
+                Math.max(-1.0, Math.min(1.0, power))
+        );
     }
 
     public void setBrake(boolean engaged) {
-        brake.setPosition(engaged ? BRAKE_ON : BRAKE_OFF);
+        brake.setPosition(
+                engaged ? BRAKE_ON : BRAKE_OFF
+        );
     }
 
     public void runKicker(double power) {
-        kicker.setPower(power);
+        kicker.setPower(
+                Math.max(-1.0, Math.min(1.0, power))
+        );
+    }
+
+    public void stopKicker() {
+        kicker.setPower(0);
     }
 
     public double getOuttakeRPM() {
-        return outtake.getVelocity() * 60.0 / 28.0;
+        return outtake.getVelocity() * 60.0 / ticksPerRev;
     }
 
     public void stop() {
-        outtake.setPower(0);
-        kicker.setPower(0);
+        stopOuttake();
+        stopKicker();
     }
 }
