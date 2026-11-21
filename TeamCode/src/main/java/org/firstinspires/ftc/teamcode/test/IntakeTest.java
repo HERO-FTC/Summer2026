@@ -119,3 +119,4 @@ public class OutakeTest extends LinearOpMode {
         outtake.setPower(0);
     }
 }
+

@@ -2,27 +2,38 @@
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.teamcode.config.RobotInit;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.teamcode.config.RoboInit;
 
 public class DriveSubsystem {
 
-    private final DcMotor frontLeft;
-    private final DcMotor frontRight;
-    private final DcMotor backLeft;
-    private final DcMotor backRight;
+    private final DcMotorEx frontLeft;
+    private final DcMotorEx frontRight;
+    private final DcMotorEx backLeft;
+    private final DcMotorEx backRight;
+
+    private final Servo stopper;
 
     private static final double DEFAULT_POWER = 0.70;
     private static final double MAX_POWER = 0.90;
     private static final double MIN_POWER = 0.50;
 
-    public DriveSubsystem(RobotInit config) {
-        frontLeft = config.frontLeft;
-        frontRight = config.frontRight;
-        backLeft = config.backLeft;
-        backRight = config.backRight;
+    private static final double STOPPER_UP = 0.2;
+    private static final double STOPPER_DOWN = 0.8;
+
+    public DriveSubsystem(RoboInit robot) {
+
+        frontLeft = robot.frontLeft;
+        frontRight = robot.frontRight;
+        backLeft = robot.backLeft;
+        backRight = robot.backRight;
+
+        stopper = robot.stopper;
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -30,15 +41,21 @@ public class DriveSubsystem {
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
+    public void drive(double forward, double strafe, double turn) {
+        drive(forward, strafe, turn, 0, 0);
+    }
+
     public void drive(double forward, double strafe, double turn,
                       double rightTrigger, double leftTrigger) {
 
-        double powerLimit = DEFAULT_POWER;
+        double driveScale = DEFAULT_POWER;
 
-        if (rightTrigger > 0.5) {
-            powerLimit = MAX_POWER;
-        } else if (leftTrigger > 0.5) {
-            powerLimit = MIN_POWER;
+        if (rightTrigger > 0.1) {
+            driveScale = MAX_POWER;
+        }
+
+        if (leftTrigger > 0.1) {
+            driveScale = MIN_POWER;
         }
 
         double fl = forward + strafe + turn;
@@ -54,15 +71,19 @@ public class DriveSubsystem {
                 )
         );
 
-        frontLeft.setPower((fl / max) * powerLimit);
-        frontRight.setPower((fr / max) * powerLimit);
-        backLeft.setPower((bl / max) * powerLimit);
-        backRight.setPower((br / max) * powerLimit);
+        fl = (fl / max) * driveScale;
+        fr = (fr / max) * driveScale;
+        bl = (bl / max) * driveScale;
+        br = (br / max) * driveScale;
+
+        frontLeft.setPower(fl);
+        frontRight.setPower(fr);
+        backLeft.setPower(bl);
+        backRight.setPower(br);
     }
 
-    // Keeps compatibility with existing TeleOp calls.
-    public void drive(double forward, double strafe, double turn) {
-        drive(forward, strafe, turn, 0.0, 0.0);
+    public void setStopper(boolean down) {
+        stopper.setPosition(down ? STOPPER_DOWN : STOPPER_UP);
     }
 
     public void stop() {
