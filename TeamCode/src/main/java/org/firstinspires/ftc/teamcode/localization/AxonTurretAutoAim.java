@@ -28,7 +28,6 @@ public class AxonTurretAutoAim extends OpMode {
     // at the hardware limit, so reprogram the Axon's range instead.
     static final int PWM_MIN_US = 500;
     static final int PWM_MAX_US = 2500;
-
     static final double TARGET_X_IN = 72.0;
     static final double TARGET_Y_IN = -72.0;
 
@@ -36,13 +35,14 @@ public class AxonTurretAutoAim extends OpMode {
     static final double START_Y_IN = 0.0;
     static final double START_HEADING_DEG = 0.0;
 
+
     static final double TURRET_OFFSET_X_IN = -3.25;
     static final double TURRET_OFFSET_Y_IN = 0.0;
     static final double AIM_TRIM_DEG = 0.0;
 
     // ---- Smoothing tuning ----
     // Low-pass time constant (seconds). Higher = smoother but laggier. Try 0.05 - 0.15.
-    static final double SMOOTHING_TAU_SEC = 0.08;
+    static final double SMOOTHING_TAU_SEC = 0.03;
     // Max turret speed in deg/sec. Prevents sudden snaps.
     static final double MAX_SLEW_DEG_PER_SEC = 360.0;
     // Ignore angle changes smaller than this (deg) so the servo stops hunting.
@@ -199,4 +199,4 @@ public class AxonTurretAutoAim extends OpMode {
         double pos = RIGHT_LIMIT_SERVO_POS + fraction * (LEFT_LIMIT_SERVO_POS - RIGHT_LIMIT_SERVO_POS);
         return Range.clip(pos, 0.0, 1.0);
     }
-}//credits claude for smoothening the turret and adding telementary(PWM VALUES)
+}

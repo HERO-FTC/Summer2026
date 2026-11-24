@@ -76,7 +76,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagClusterDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagClusterDetection;//good
 
 import java.util.List;
 import java.util.ArrayList;

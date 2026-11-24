@@ -1,4 +1,3 @@
-
 package org.firstinspires.ftc.teamcode.TeleOp;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -24,15 +23,20 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean intakeRunning = false;
         boolean outtakeRunning = false;
         boolean brakeEngaged = false;
-        boolean stopperDown = false;
+        boolean stopperOpen = false;
         boolean reverseEverything = false;
+        boolean kickerRunning = false;
+        boolean kickerReversed = false;
 
         boolean previousA = false;
         boolean previousX = false;
         boolean previousY = false;
         boolean previousRB = false;
-        boolean previousStopperDown = false;
-        boolean previousStopperUp = false;
+        boolean previousB = false;
+        boolean previousLB = false;
+
+        // STOPPER BUTTON TRACKING
+        boolean previousGamepad1Y = false;
 
         telemetry.addLine("BioBuzz TeleOp Initialized");
         telemetry.update();
@@ -55,73 +59,127 @@ public class MainTeleOp11_20 extends LinearOpMode {
                         gamepad1.left_trigger
                 );
 
+
                 // GAMEPAD 2 A - INTAKE ON/OFF
+
                 if (gamepad2.a && !previousA) {
                     intakeRunning = !intakeRunning;
                 }
 
+
                 // GAMEPAD 2 X - OUTTAKE ON/OFF
+
                 if (gamepad2.x && !previousX) {
                     outtakeRunning = !outtakeRunning;
                 }
 
+
                 // GAMEPAD 2 Y - REVERSE EVERYTHING
+
                 if (gamepad2.y && !previousY) {
                     reverseEverything = !reverseEverything;
                 }
 
+
                 // GAMEPAD 2 RB - BRAKE ON/OFF
+
                 if (gamepad2.right_bumper && !previousRB) {
                     brakeEngaged = !brakeEngaged;
                 }
 
-                // GAMEPAD 1 RB - STOPPER DOWN
-                if (gamepad1.right_bumper && !previousStopperDown) {
-                    stopperDown = true;
+
+                // GAMEPAD 2 B - KICKER FORWARD ON/OFF
+
+                if (gamepad2.b && !previousB) {
+                    kickerRunning = !kickerRunning;
+                    kickerReversed = false;
                 }
 
-                // GAMEPAD 1 LB - STOPPER UP
-                if (gamepad1.left_bumper && !previousStopperUp) {
-                    stopperDown = false;
+
+                // GAMEPAD 2 LB - KICKER REVERSE ON/OFF
+
+                if (gamepad2.left_bumper && !previousLB) {
+                    kickerReversed = !kickerReversed;
+                    kickerRunning = false;
                 }
+
+
+                // GAMEPAD 1 Y - STOPPER OPEN/CLOSED
+
+                if (gamepad1.y && !previousGamepad1Y) {
+                    stopperOpen = !stopperOpen;
+                }
+
 
                 // UPDATE BUTTON STATES
+
                 previousA = gamepad2.a;
                 previousX = gamepad2.x;
                 previousY = gamepad2.y;
                 previousRB = gamepad2.right_bumper;
+                previousB = gamepad2.b;
+                previousLB = gamepad2.left_bumper;
 
-                previousStopperDown = gamepad1.right_bumper;
-                previousStopperUp = gamepad1.left_bumper;
+                previousGamepad1Y = gamepad1.y;
+
 
                 // INTAKE CONTROL
+
                 if (intakeRunning) {
                     intake.run(reverseEverything ? -1.0 : 1.0);
                 } else {
                     intake.stop();
                 }
 
+
                 // OUTTAKE CONTROL
+
                 if (outtakeRunning) {
-                    shooter.startOuttake();
+                    shooter.startFlywheel();
                 } else {
-                    shooter.stopOuttake();
+                    shooter.stopFlywheel();
                 }
 
+
+                // KICKER CONTROL
+
+                if (kickerReversed) {
+                    shooter.runKicker(-1.0);
+                } else if (kickerRunning) {
+                    shooter.runKicker(1.0);
+                } else {
+                    shooter.runKicker(0);
+                }
+
+
                 // BRAKE CONTROL
+
                 shooter.setBrake(brakeEngaged);
 
+
                 // STOPPER CONTROL
-                drive.setStopper(stopperDown);
+
+                shooter.setStopper(stopperOpen);
+
 
                 // TELEMETRY
+
                 telemetry.addData("Intake", intakeRunning ? "ON" : "OFF");
                 telemetry.addData("Outtake", outtakeRunning ? "ON" : "OFF");
-                telemetry.addData("Brake", brakeEngaged ? "ENGAGED" : "RELEASED");
-                telemetry.addData("Stopper", stopperDown ? "DOWN" : "UP");
-                telemetry.addData("Reverse Everything", reverseEverything ? "ON" : "OFF");
 
-                telemetry.addData("Kicker", "RUNNING BACKWARD");
+                telemetry.addData("Brake",
+                        brakeEngaged ? "ENGAGED" : "RELEASED");
+
+                telemetry.addData("Stopper",
+                        stopperOpen ? "OPEN" : "CLOSED");
+
+                telemetry.addData("Reverse Everything",
+                        reverseEverything ? "ON" : "OFF");
+
+                telemetry.addData("Kicker",
+                        kickerReversed ? "REVERSING" :
+                                kickerRunning ? "RUNNING FORWARD" : "STOPPED");
+
                 telemetry.addData("Intake RPM", "%.1f", intake.getRPM());
                 telemetry.addData("Outtake RPM", "%.1f", shooter.getOuttakeRPM());
 
@@ -137,12 +195,14 @@ public class MainTeleOp11_20 extends LinearOpMode {
     }
 }
 
+
 // GAMEPAD 2:
-// A - Intake ON/OFF
-// X - Outtake ON/OFF
-// Y - Reverse everything (motors only, NOT normal servos)
+// A  - Intake ON/OFF
+// X  - Outtake ON/OFF
+// Y  - Reverse Everything
 // RB - Brake ON/OFF
+// B  - Kicker FORWARD ON/OFF
+// LB - Kicker REVERSE ON/OFF
 //
 // GAMEPAD 1:
-// RB - Stopper DOWN
-// LB - Stopper UP
+// Y  - Stopper OPEN/CLOSED

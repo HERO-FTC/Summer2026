@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "Kicker + Intake + Outtake Test", group = "Components")
-public class OutakeTest extends LinearOpMode {
+public class IntakeTest extends LinearOpMode {
 
     private CRServo kicker;
     private DcMotorEx intake;
