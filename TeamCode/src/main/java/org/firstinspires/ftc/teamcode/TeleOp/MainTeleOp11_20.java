@@ -19,8 +19,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
         DriveSystemV2 drive = new DriveSystemV2(robot);
         IntakeSubsystemV2 intake = new IntakeSubsystemV2(robot);
-        ShooterTurretSubsystemV2 shooter =
-                new ShooterTurretSubsystemV2(robot);
+        ShooterTurretSubsystemV2 shooter = new ShooterTurretSubsystemV2(robot);
 
         boolean intakeRunning = false;
         boolean outtakeRunning = false;
