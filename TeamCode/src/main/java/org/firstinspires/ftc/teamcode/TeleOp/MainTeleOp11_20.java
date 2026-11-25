@@ -19,7 +19,8 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
         DriveSystemV2 drive = new DriveSystemV2(robot);
         IntakeSubsystemV2 intake = new IntakeSubsystemV2(robot);
-        ShooterTurretSubsystemV2 shooter = new ShooterTurretSubsystemV2(robot);
+        ShooterTurretSubsystemV2 shooter =
+                new ShooterTurretSubsystemV2(robot);
 
         boolean intakeRunning = false;
         boolean outtakeRunning = false;
@@ -39,7 +40,11 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean previousStopperDown = false;
         boolean previousStopperUp = false;
 
+        // Initialize stopper in UP position
+        drive.setStopper(false);
+
         telemetry.addLine("BioBuzz TeleOp Initialized");
+        telemetry.addLine("Stopper: UP");
         telemetry.update();
 
         waitForStart();
@@ -81,7 +86,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
                     brakeEngaged = !brakeEngaged;
                 }
 
-                // GAMEPAD 2 D-PAD DOWN - KICKER ON/OFF
+                // GAMEPAD 2 DPAD DOWN - KICKER ON/OFF
                 if (gamepad2.dpad_down && !previousDpadDown) {
                     kickerRunning = !kickerRunning;
                 }
@@ -156,7 +161,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
                 telemetry.addData(
                         "Stopper",
-                        stopperDown ? "DOWN" : "UP"
+                        stopperDown ? "DOWN (0.30)" : "UP (0.51)"
                 );
 
                 telemetry.addData(
@@ -174,6 +179,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
         } finally {
 
+            drive.setStopper(false);
             drive.stop();
             intake.stop();
             shooter.stop();

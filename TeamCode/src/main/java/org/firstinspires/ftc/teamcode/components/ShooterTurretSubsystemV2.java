@@ -1,3 +1,100 @@
+//package org.firstinspires.ftc.teamcode.components;
+//
+//import com.qualcomm.robotcore.hardware.CRServo;
+//import com.qualcomm.robotcore.hardware.DcMotor;
+//import com.qualcomm.robotcore.hardware.DcMotorEx;
+//import com.qualcomm.robotcore.hardware.Servo;
+//import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+//
+//import org.firstinspires.ftc.teamcode.config.RoboInit;
+//
+//public class ShooterTurretSubsystemV2 {
+//
+//    private final DcMotorEx outtake;
+//    private final Servo brake;
+//    private final CRServo kicker;
+//
+//    private static final double BRAKE_ON = 0.47;
+//    private static final double BRAKE_OFF = 0.51;
+//
+//    private static final double TARGET_RPM = 6000.0 * 0.35;
+//
+//    private final double ticksPerRev;
+//
+//    public ShooterTurretSubsystemV2(RoboInit robot) {
+//
+//        outtake = robot.outtake;
+//        brake = robot.brake;
+//        kicker = robot.kicker;
+//
+//        ticksPerRev = outtake.getMotorType().getTicksPerRev();
+//
+//        outtake.setZeroPowerBehavior(
+//                DcMotor.ZeroPowerBehavior.BRAKE
+//        );
+//
+//        outtake.setMode(
+//                DcMotor.RunMode.RUN_USING_ENCODER
+//        );
+//
+//        // PIDF configuration (add coefficients later)
+//        // outtake.setPIDFCoefficients(
+//        //         DcMotor.RunMode.RUN_USING_ENCODER,
+//        //         new PIDFCoefficients(P, I, D, F)
+//        // );
+//
+//        // Kicker starts OFF
+//        kicker.setPower(0);
+//    }
+//
+//    public void startOuttake() {
+//        setOuttakeRPM(TARGET_RPM);
+//    }
+//
+//    public void setOuttakeRPM(double rpm) {
+//
+//        outtake.setVelocity(
+//                rpm * ticksPerRev / 60.0
+//        );
+//    }
+//
+//    public void stopOuttake() {
+//        outtake.setVelocity(0);
+//    }
+//
+//    public void runOuttake(double power) {
+//
+//        power = Math.max(-1.0, Math.min(1.0, power));
+//
+//        setOuttakeRPM(power * TARGET_RPM);
+//    }
+//
+//    public void setBrake(boolean engaged) {
+//        brake.setPosition(
+//                engaged ? BRAKE_ON : BRAKE_OFF
+//        );
+//    }
+//
+//    public void runKicker(double power) {
+//        kicker.setPower(
+//                Math.max(-1.0, Math.min(1.0, power))
+//        );
+//    }
+//
+//    public void stopKicker() {
+//        kicker.setPower(0);
+//    }
+//
+//    public double getOuttakeRPM() {
+//        return outtake.getVelocity() * 60.0 / ticksPerRev;
+//    }
+//
+//    public void stop() {
+//        stopOuttake();
+//        stopKicker();
+//    }
+//}
+
 
 package org.firstinspires.ftc.teamcode.components;
 
@@ -5,7 +102,6 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.teamcode.config.RoboInit;
 
@@ -14,6 +110,9 @@ public class ShooterTurretSubsystemV2 {
     private final DcMotorEx outtake;
     private final Servo brake;
     private final CRServo kicker;
+
+    // Camera component
+    private aprilTagCameraDetectT camera;
 
     private static final double BRAKE_ON = 0.47;
     private static final double BRAKE_OFF = 0.51;
@@ -38,20 +137,36 @@ public class ShooterTurretSubsystemV2 {
                 DcMotor.RunMode.RUN_USING_ENCODER
         );
 
-        // PIDF configuration (add coefficients later)
-        // outtake.setPIDFCoefficients(
-        //         DcMotor.RunMode.RUN_USING_ENCODER,
-        //         new PIDFCoefficients(P, I, D, F)
-        // );
-
         // Kicker starts OFF
         kicker.setPower(0);
     }
 
+    // Connect the camera component
+    public void setCamera(aprilTagCameraDetectT camera) {
+        this.camera = camera;
+    }
+
+    // Check cluster visibility and stop outtake if cluster is lost
+    public void checkClusterVisibility() {
+
+        // If camera has not been initialized, stop outtake
+        if (camera == null) {
+            stopOuttake();
+            return;
+        }
+
+        // If cluster is no longer visible, stop outtake
+        if (!camera.isClusterVisible()) {
+            stopOuttake();
+        }
+    }
+
+    // Start outtake at target RPM
     public void startOuttake() {
         setOuttakeRPM(TARGET_RPM);
     }
 
+    // Set outtake RPM
     public void setOuttakeRPM(double rpm) {
 
         outtake.setVelocity(
@@ -59,10 +174,12 @@ public class ShooterTurretSubsystemV2 {
         );
     }
 
+    // Stop outtake
     public void stopOuttake() {
         outtake.setVelocity(0);
     }
 
+    // Run outtake with specified power
     public void runOuttake(double power) {
 
         power = Math.max(-1.0, Math.min(1.0, power));
@@ -70,26 +187,33 @@ public class ShooterTurretSubsystemV2 {
         setOuttakeRPM(power * TARGET_RPM);
     }
 
+    // Control brake servo
     public void setBrake(boolean engaged) {
+
         brake.setPosition(
                 engaged ? BRAKE_ON : BRAKE_OFF
         );
     }
 
+    // Run kicker
     public void runKicker(double power) {
+
         kicker.setPower(
                 Math.max(-1.0, Math.min(1.0, power))
         );
     }
 
+    // Stop kicker
     public void stopKicker() {
         kicker.setPower(0);
     }
 
+    // Get current outtake RPM
     public double getOuttakeRPM() {
         return outtake.getVelocity() * 60.0 / ticksPerRev;
     }
 
+    // Stop subsystem
     public void stop() {
         stopOuttake();
         stopKicker();
