@@ -11,15 +11,15 @@ public class ServoTestInc extends LinearOpMode {
     private Servo servo;
 
     private double position = 0.5;
-    private double minPosition = 0.0;
-    private double maxPosition = 1.0;
+    private double minPosition = 0.47;
+    private double maxPosition = 0.51;
 
-    private final double step = 0.01;
+    private final double step = 0.05;
 
     @Override
     public void runOpMode() {
 
-        servo = hardwareMap.get(Servo.class, "turretServo");
+        servo = hardwareMap.get(Servo.class, "brake");
 
         servo.setPosition(position);
 

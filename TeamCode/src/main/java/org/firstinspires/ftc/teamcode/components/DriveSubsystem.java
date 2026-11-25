@@ -30,7 +30,7 @@ public class DriveSubsystem {
         backLeft = robot.backLeft;
         backRight = robot.backRight;
 
-        stopper = robot.stopper;
+        stopper = robot.gate;
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.REVERSE);

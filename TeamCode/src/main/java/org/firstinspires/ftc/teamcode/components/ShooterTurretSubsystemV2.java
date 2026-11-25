@@ -91,12 +91,15 @@ public class ShooterTurretSubsystemV2 {
 
     private final DcMotorEx outtake;
     private final Servo brake;
-    private final CRServo kicker;
+    //private final CRServo kicker;
+    private final Servo flowerBar;
     private final Servo stopper;
 
     // BRAKE SERVO POSITIONS
     private static final double BRAKE_ON = 0.47;
     private static final double BRAKE_OFF = 0.51;
+    private static final double FLOWER_SERVO_UP = 0.47;
+    private static final double FLOWER_SERVO_DOWN = 0.07;
 
     // STOPPER SERVO POSITIONS
     // These are initial testing values based on your teammates' tests.
@@ -109,20 +112,28 @@ public class ShooterTurretSubsystemV2 {
 
     public ShooterTurretSubsystemV2(RoboInit robot) {
 
+
         outtake = robot.outtake;
         brake = robot.brake;
-        kicker = robot.kicker;
-        stopper = robot.stopper;
-
+      //  kicker = robot.kicker;
+        stopper = robot.gate;
+        flowerBar = robot.flowerBar;
         outtake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // KICKER STARTS STOPPED
-        kicker.setPower(0);
+       // kicker.setPower(0);
 
         // STOPPER STARTS CLOSED
         stopper.setPosition(STOPPER_CLOSED);
+        flowerBar.setPosition(FLOWER_SERVO_UP);
     }
+    public void flowerServoUp() {flowerBar.setPosition(FLOWER_SERVO_UP);
+    }
+
+    public void flowerServoDown() {flowerBar.setPosition(FLOWER_SERVO_DOWN);
+    }
+
 
 
     // FLYWHEEL CONTROL
@@ -150,7 +161,7 @@ public class ShooterTurretSubsystemV2 {
     // KICKER CONTROL
 
     public void runKicker(double power) {
-        kicker.setPower(power);
+       // kicker.setPower(power);
     }
 
 
@@ -172,7 +183,7 @@ public class ShooterTurretSubsystemV2 {
 
     public void stop() {
         outtake.setPower(0);
-        kicker.setPower(0);
+     //   kicker.setPower(0);
 
         // Return stopper to closed position when OpMode ends.
         stopper.setPosition(STOPPER_CLOSED);

@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+
 import org.firstinspires.ftc.teamcode.config.RoboInit;
 
 public class DriveSystemV2 {
@@ -21,8 +22,8 @@ public class DriveSystemV2 {
     private static final double MAX_POWER = 0.90;
     private static final double MIN_POWER = 0.50;
 
-    private static final double STOPPER_UP = 0.51;
-    private static final double STOPPER_DOWN = 0.3;
+    private static final double STOPPER_UP = 0.7;
+    private static final double STOPPER_DOWN = 0.1;
 
     public DriveSystemV2(RoboInit robot) {
 
@@ -31,7 +32,7 @@ public class DriveSystemV2 {
         backLeft = robot.backLeft;
         backRight = robot.backRight;
 
-        stopper = robot.stopper;
+        stopper = robot.gate;
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
@@ -95,3 +96,5 @@ public class DriveSystemV2 {
         backRight.setPower(0);
     }
 }
+
+
