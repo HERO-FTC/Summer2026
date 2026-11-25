@@ -1,5 +1,4 @@
-
-package org.firstinspires.ftc.teamcode.localization;
+package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
