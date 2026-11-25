@@ -1,34 +1,30 @@
 
-package org.firstinspires.ftc.teamcode.components;
+package org.firstinspires.ftc.teamcode.localization;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-
-import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
-
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-
-public class AxonTurretAutoAim {
-
-    // ---------------- SETTINGS ----------------
+@TeleOp(name = "Axon Turret Auto Aim V2", group = "Turret")
+public class AxonTurretAutoAim extends OpMode {
 
     private static final double MIN_ANGLE = -90.0;
     private static final double MAX_ANGLE = 90.0;
 
-    private double targetX = 72.0;
-    private double targetY = -72.0;
+    private static final double TARGET_X = 72.0;
+    private static final double TARGET_Y = -72.0;
 
-    private double startX = 0.0;
-    private double startY = 0.0;
-    private double startHeading = 0.0;
+    private static final double START_X = 0.0;
+    private static final double START_Y = 0.0;
+    private static final double START_HEADING = 0.0;
 
     private static final double TURRET_OFFSET_X = -3.25;
     private static final double TURRET_OFFSET_Y = 0.0;
@@ -40,55 +36,38 @@ public class AxonTurretAutoAim {
 
     private static final double FILTER_TIME = 0.08;
     private static final double DEADBAND = 0.4;
+    private static final double MANUAL_SPEED = 90.0;
 
     private static final boolean REVERSE_SERVO = false;
-
-
-    // ---------------- HARDWARE ----------------
 
     private GoBildaPinpointDriver pinpoint;
     private ServoImplEx turretServo;
 
-    private boolean initialized = false;
-
     private final ElapsedTime timer = new ElapsedTime();
 
-
-    // ---------------- CONTROL STATE ----------------
-
     private boolean autoAimEnabled = true;
+    private boolean lastB = false;
+    private boolean lastX = false;
+
     private boolean filterInitialized = false;
-
-
-    // ---------------- FILTERED VALUES ----------------
 
     private double filteredX = 0.0;
     private double filteredY = 0.0;
     private double filteredHeading = 0.0;
     private double filteredTargetAngle = 0.0;
 
-
-    // ---------------- TURRET VALUES ----------------
-
     private double commandedAngle = 0.0;
     private double lastServoPosition = -1.0;
 
     private double pivotX = 0.0;
     private double pivotY = 0.0;
-
     private double targetDistance = 0.0;
     private double rawTargetAngle = 0.0;
 
     private boolean targetReachable = false;
 
-    private GoBildaPinpointDriver.DeviceStatus pinpointStatus;
-
-
-    // =================================================
-    // INITIALIZATION
-    // =================================================
-
-    public void init(HardwareMap hardwareMap) {
+    @Override
+    public void init() {
 
         pinpoint = hardwareMap.get(
                 GoBildaPinpointDriver.class,
@@ -99,6 +78,7 @@ public class AxonTurretAutoAim {
                 ServoImplEx.class,
                 "turretServo"
         );
+
 
         turretServo.setPwmRange(
                 new PwmControl.PwmRange(PWM_MIN, PWM_MAX)
@@ -122,40 +102,39 @@ public class AxonTurretAutoAim {
         pinpoint.resetPosAndIMU();
 
         commandedAngle = 0.0;
-        lastServoPosition = -1.0;
 
         sendServo(angleToPosition(commandedAngle));
 
         timer.reset();
 
-        initialized = true;
+        telemetry.addLine("AXON TURRET READY");
+        telemetry.addData("Travel", "180 degrees");
+        telemetry.addData("PWM", "%d - %d", PWM_MIN, PWM_MAX);
+        telemetry.update();
     }
 
+    @Override
+    public void init_loop() {
 
-    // =================================================
-    // START
-    // =================================================
+        pinpoint.update();
 
+        telemetry.addData(
+                "Pinpoint",
+                pinpoint.getDeviceStatus()
+        );
+
+        telemetry.update();
+    }
+
+    @Override
     public void start() {
 
-        checkInitialized();
-
         setStartPose();
-
         timer.reset();
     }
 
-
-    // =================================================
-    // MAIN UPDATE
-    // =================================================
-
-    // Call repeatedly inside a TeleOp or Autonomous loop.
-    // No gamepad is required.
-
-    public void update() {
-
-        checkInitialized();
+    @Override
+    public void loop() {
 
         double dt = Range.clip(
                 timer.seconds(),
@@ -167,11 +146,12 @@ public class AxonTurretAutoAim {
 
         pinpoint.update();
 
-        pinpointStatus = pinpoint.getDeviceStatus();
-
-        if (pinpointStatus !=
+        if (pinpoint.getDeviceStatus() !=
                 GoBildaPinpointDriver.DeviceStatus.READY) {
 
+            telemetry.addData("ERROR", "PINPOINT NOT READY");
+            telemetry.addData("Status", pinpoint.getDeviceStatus());
+            telemetry.update();
             return;
         }
 
@@ -180,9 +160,6 @@ public class AxonTurretAutoAim {
         double robotX = pose.getX(DistanceUnit.INCH);
         double robotY = pose.getY(DistanceUnit.INCH);
         double robotHeading = pose.getHeading(AngleUnit.DEGREES);
-
-
-        // ---------------- POSITION FILTERING ----------------
 
         if (!filterInitialized) {
 
@@ -206,14 +183,22 @@ public class AxonTurretAutoAim {
                         )
         );
 
+        if (gamepad1.b && !lastB) {
+            autoAimEnabled = !autoAimEnabled;
+        }
 
-        // ---------------- AUTOMATIC AIM ----------------
+        lastB = gamepad1.b;
+
+        if (gamepad1.x && !lastX) {
+            setStartPose();
+        }
+
+        lastX = gamepad1.x;
 
         if (autoAimEnabled) {
 
             double headingRad = Math.toRadians(filteredHeading);
 
-            // Calculate turret pivot position.
             pivotX =
                     filteredX +
                             TURRET_OFFSET_X * Math.cos(headingRad) -
@@ -224,41 +209,27 @@ public class AxonTurretAutoAim {
                             TURRET_OFFSET_X * Math.sin(headingRad) +
                             TURRET_OFFSET_Y * Math.cos(headingRad);
 
-
-            // Calculate distance to target.
-            double dx = targetX - pivotX;
-            double dy = targetY - pivotY;
+            double dx = TARGET_X - pivotX;
+            double dy = TARGET_Y - pivotY;
 
             targetDistance = Math.hypot(dx, dy);
 
-
-            // Calculate field angle.
             double fieldAngle = Math.toDegrees(
                     Math.atan2(dy, dx)
             );
 
-
-            // Convert field angle to robot-relative angle.
             rawTargetAngle = AngleUnit.normalizeDegrees(
                     fieldAngle - filteredHeading + AIM_TRIM
             );
 
-
-            // Check turret reachability.
             targetReachable =
                     rawTargetAngle >= MIN_ANGLE &&
                             rawTargetAngle <= MAX_ANGLE;
 
-
             if (targetReachable) {
 
-                // Preserve original target-angle filtering.
-                if (Math.abs(
-                        rawTargetAngle - filteredTargetAngle
-                ) > 180.0) {
-
+                if (Math.abs(rawTargetAngle - filteredTargetAngle) > 180.0) {
                     filteredTargetAngle = rawTargetAngle;
-
                 } else {
 
                     double angleError =
@@ -272,8 +243,6 @@ public class AxonTurretAutoAim {
                             );
                 }
 
-
-                // Update commanded turret angle.
                 double error =
                         AngleUnit.normalizeDegrees(
                                 filteredTargetAngle - commandedAngle
@@ -282,11 +251,29 @@ public class AxonTurretAutoAim {
                 if (Math.abs(error) > DEADBAND) {
                     commandedAngle = filteredTargetAngle;
                 }
+
             }
+
+        } else {
+
+            targetReachable = true;
+
+            if (gamepad1.dpad_left) {
+                commandedAngle += MANUAL_SPEED * dt;
+            }
+
+            if (gamepad1.dpad_right) {
+                commandedAngle -= MANUAL_SPEED * dt;
+            }
+
+            commandedAngle = Range.clip(
+                    commandedAngle,
+                    MIN_ANGLE,
+                    MAX_ANGLE
+            );
+
+            filteredTargetAngle = commandedAngle;
         }
-
-
-        // ---------------- SERVO UPDATE ----------------
 
         commandedAngle = Range.clip(
                 commandedAngle,
@@ -297,171 +284,15 @@ public class AxonTurretAutoAim {
         double servoPosition = angleToPosition(commandedAngle);
 
         sendServo(servoPosition);
-    }
-
-
-    // =================================================
-    // STARTING POSE
-    // =================================================
-
-    public void setStartPose() {
-
-        checkInitialized();
-
-        pinpoint.setPosition(
-                new Pose2D(
-                        DistanceUnit.INCH,
-                        startX,
-                        startY,
-                        AngleUnit.DEGREES,
-                        startHeading
-                )
-        );
-
-        filterInitialized = false;
-    }
-
-
-    // Set a custom starting pose.
-    // Call before start().
-
-    public void setStartPose(
-            double x,
-            double y,
-            double heading
-    ) {
-
-        startX = x;
-        startY = y;
-        startHeading = heading;
-    }
-
-
-    // =================================================
-    // TARGET SETTINGS
-    // =================================================
-
-    public void setTargetPosition(double x, double y) {
-
-        targetX = x;
-        targetY = y;
-    }
-
-
-    // =================================================
-    // AUTO AIM SETTINGS
-    // =================================================
-
-    public void setAutoAimEnabled(boolean enabled) {
-
-        autoAimEnabled = enabled;
-    }
-
-
-    public boolean isAutoAimEnabled() {
-
-        return autoAimEnabled;
-    }
-
-
-    // =================================================
-    // SERVO FUNCTIONS
-    // =================================================
-
-    private void sendServo(double position) {
-
-        if (Math.abs(position - lastServoPosition) >= 0.001) {
-
-            turretServo.setPosition(position);
-
-            lastServoPosition = position;
-        }
-    }
-
-
-    private double angleToPosition(double angle) {
-
-        double clippedAngle = Range.clip(
-                angle,
-                MIN_ANGLE,
-                MAX_ANGLE
-        );
-
-        double position =
-                (clippedAngle - MIN_ANGLE) /
-                        (MAX_ANGLE - MIN_ANGLE);
-
-        if (REVERSE_SERVO) {
-            position = 1.0 - position;
-        }
-
-        return Range.clip(position, 0.0, 1.0);
-    }
-
-
-    // =================================================
-    // GETTERS
-    // =================================================
-
-    public double getCommandedAngle() {
-        return commandedAngle;
-    }
-
-    public double getRawTargetAngle() {
-        return rawTargetAngle;
-    }
-
-    public double getFilteredTargetAngle() {
-        return filteredTargetAngle;
-    }
-
-    public double getServoPosition() {
-        return angleToPosition(commandedAngle);
-    }
-
-    public double getTargetDistance() {
-        return targetDistance;
-    }
-
-    public boolean isTargetReachable() {
-        return targetReachable;
-    }
-
-    public double getRobotX() {
-        return filteredX;
-    }
-
-    public double getRobotY() {
-        return filteredY;
-    }
-
-    public double getRobotHeading() {
-        return filteredHeading;
-    }
-
-    public double getPivotX() {
-        return pivotX;
-    }
-
-    public double getPivotY() {
-        return pivotY;
-    }
-
-
-    // =================================================
-    // TELEMETRY
-    // =================================================
-
-    public void addTelemetry(Telemetry telemetry) {
 
         telemetry.addData(
                 "MODE",
-                autoAimEnabled ? "AUTO" : "DISABLED"
+                autoAimEnabled ? "AUTO" : "MANUAL"
         );
 
         telemetry.addData(
                 "PINPOINT",
-                pinpointStatus
+                pinpoint.getDeviceStatus()
         );
 
         telemetry.addData(
@@ -521,35 +352,57 @@ public class AxonTurretAutoAim {
         telemetry.addData(
                 "Servo Position",
                 "%.3f",
-                getServoPosition()
+                servoPosition
         );
 
         if (autoAimEnabled && !targetReachable) {
             telemetry.addLine("TARGET OUTSIDE TURRET RANGE");
         }
 
-        if (pinpointStatus !=
-                GoBildaPinpointDriver.DeviceStatus.READY) {
+        telemetry.update();
+    }
 
-            telemetry.addData(
-                    "ERROR",
-                    "PINPOINT NOT READY"
-            );
+    private void setStartPose() {
+
+        pinpoint.setPosition(
+                new Pose2D(
+                        DistanceUnit.INCH,
+                        START_X,
+                        START_Y,
+                        AngleUnit.DEGREES,
+                        START_HEADING
+                )
+        );
+
+        filterInitialized = false;
+    }
+
+    private void sendServo(double position) {
+
+        if (Math.abs(position - lastServoPosition) >= 0.001) {
+
+            turretServo.setPosition(position);
+
+            lastServoPosition = position;
         }
     }
 
+    private double angleToPosition(double angle) {
 
-    // =================================================
-    // INITIALIZATION CHECK
-    // =================================================
+        double clippedAngle = Range.clip(
+                angle,
+                MIN_ANGLE,
+                MAX_ANGLE
+        );
 
-    private void checkInitialized() {
+        double position =
+                (clippedAngle - MIN_ANGLE) /
+                        (MAX_ANGLE - MIN_ANGLE);
 
-        if (!initialized) {
-
-            throw new IllegalStateException(
-                    "TurretAutoAimSubsystem has not been initialized!"
-            );
+        if (REVERSE_SERVO) {
+            position = 1.0 - position;
         }
+
+        return Range.clip(position, 0.0, 1.0);
     }
 }
