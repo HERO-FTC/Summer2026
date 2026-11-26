@@ -19,7 +19,8 @@ public class RoboInit {
     public Servo brake;
     public CRServo kicker;
     public Servo turret;
-    public Servo stopper;
+    public Servo flowerBar;
+    public Servo gate;
 
     public RoboInit(HardwareMap hardwareMap) {
 
@@ -34,6 +35,7 @@ public class RoboInit {
         brake = hardwareMap.get(Servo.class, "brake");
         kicker = hardwareMap.get(CRServo.class, "kick");
         turret = hardwareMap.get(Servo.class, "turretAim");
-        stopper = hardwareMap.get(Servo.class, "stopper");
+        gate = hardwareMap.get(Servo.class, "gate");
+        flowerBar = hardwareMap.get(Servo.class, "flower");
     }
 }

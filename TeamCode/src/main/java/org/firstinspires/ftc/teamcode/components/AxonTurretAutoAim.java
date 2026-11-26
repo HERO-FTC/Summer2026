@@ -1,5 +1,4 @@
-
-package org.firstinspires.ftc.teamcode.localization;
+package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -19,27 +18,26 @@ public class AxonTurretAutoAim extends OpMode {
     private static final double MIN_ANGLE = -90.0;
     private static final double MAX_ANGLE = 90.0;
 
-    private static final double TARGET_X = 58.75;
-    private static final double TARGET_Y = 70.75;
+    private static final double TARGET_X = 72.0;
+    private static final double TARGET_Y = -72.0;
 
     private static final double START_X = 0.0;
     private static final double START_Y = 0.0;
     private static final double START_HEADING = 0.0;
 
-    // Turret pivot: 2 inches forward, 3.5 inches left
-    private static final double TURRET_OFFSET_X = 2.0;
-    private static final double TURRET_OFFSET_Y = 3.5;
+    private static final double TURRET_OFFSET_X = -3.25;
+    private static final double TURRET_OFFSET_Y = 0.0;
 
     private static final double AIM_TRIM = 0.0;
 
     private static final int PWM_MIN = 500;
     private static final int PWM_MAX = 2500;
 
-    private static final double FILTER_TIME = 0.02;
-    private static final double DEADBAND = 0.2;
+    private static final double FILTER_TIME = 0.08;
+    private static final double DEADBAND = 0.4;
     private static final double MANUAL_SPEED = 90.0;
 
-    private static final boolean REVERSE_SERVO = true;
+    private static final boolean REVERSE_SERVO = false;
 
     private GoBildaPinpointDriver pinpoint;
     private ServoImplEx turretServo;
@@ -77,28 +75,27 @@ public class AxonTurretAutoAim extends OpMode {
 
         turretServo = hardwareMap.get(
                 ServoImplEx.class,
-                "turretAim"
+                "turretServo"
         );
+
 
         turretServo.setPwmRange(
                 new PwmControl.PwmRange(PWM_MIN, PWM_MAX)
         );
 
-        // Updated GoBILDA Pinpoint configuration
         pinpoint.setOffsets(
-                2.5,
-                -4.75,
-                DistanceUnit.INCH
+                -162.56,
+                -114.30,
+                DistanceUnit.MM
         );
 
         pinpoint.setEncoderResolution(
                 GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD
         );
 
-        // Both encoder directions reversed
         pinpoint.setEncoderDirections(
-                GoBildaPinpointDriver.EncoderDirection.REVERSED,
-                GoBildaPinpointDriver.EncoderDirection.REVERSED
+                GoBildaPinpointDriver.EncoderDirection.FORWARD,
+                GoBildaPinpointDriver.EncoderDirection.FORWARD
         );
 
         pinpoint.resetPosAndIMU();
@@ -112,8 +109,6 @@ public class AxonTurretAutoAim extends OpMode {
         telemetry.addLine("AXON TURRET READY");
         telemetry.addData("Travel", "180 degrees");
         telemetry.addData("PWM", "%d - %d", PWM_MIN, PWM_MAX);
-        telemetry.addData("Pinpoint", "Configured");
-        telemetry.addData("Turret Offset", "X: 2.0 | Y: 3.5");
         telemetry.update();
     }
 
@@ -255,6 +250,7 @@ public class AxonTurretAutoAim extends OpMode {
                 if (Math.abs(error) > DEADBAND) {
                     commandedAngle = filteredTargetAngle;
                 }
+
             }
 
         } else {
@@ -298,11 +294,29 @@ public class AxonTurretAutoAim extends OpMode {
                 pinpoint.getDeviceStatus()
         );
 
-        telemetry.addData("Robot X", "%.2f", filteredX);
-        telemetry.addData("Robot Y", "%.2f", filteredY);
-        telemetry.addData("Heading", "%.2f", filteredHeading);
+        telemetry.addData(
+                "Robot X",
+                "%.2f",
+                filteredX
+        );
 
-        telemetry.addData("Raw Target Angle", "%.2f", rawTargetAngle);
+        telemetry.addData(
+                "Robot Y",
+                "%.2f",
+                filteredY
+        );
+
+        telemetry.addData(
+                "Heading",
+                "%.2f",
+                filteredHeading
+        );
+
+        telemetry.addData(
+                "Raw Target Angle",
+                "%.2f",
+                rawTargetAngle
+        );
 
         telemetry.addData(
                 "Filtered Target Angle",
@@ -323,7 +337,10 @@ public class AxonTurretAutoAim extends OpMode {
                 targetDistance
         );
 
-        telemetry.addData("Target Reachable", targetReachable);
+        telemetry.addData(
+                "Target Reachable",
+                targetReachable
+        );
 
         telemetry.addData(
                 "Turret Angle",

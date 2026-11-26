@@ -1,10 +1,11 @@
+
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.config.RobotInit;
-import org.jetbrains.annotations.UnknownNullability;
+import org.firstinspires.ftc.teamcode.config.RoboInit;
 
 public class DriveSubsystem {
 
@@ -13,21 +14,26 @@ public class DriveSubsystem {
     private final DcMotorEx backLeft;
     private final DcMotorEx backRight;
 
+    private final Servo stopper;
+
     private static final double DEFAULT_POWER = 0.70;
     private static final double MAX_POWER = 0.90;
     private static final double MIN_POWER = 0.50;
 
-    public DriveSubsystem(@UnknownNullability RobotInit robot) {
+    private static final double STOPPER_UP = 0.2;
+    private static final double STOPPER_DOWN = 0.8;
+
+    public DriveSubsystem(RoboInit robot) {
+
         frontLeft = robot.frontLeft;
         frontRight = robot.frontRight;
         backLeft = robot.backLeft;
         backRight = robot.backRight;
 
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        stopper = robot.gate;
 
-        frontRight.setDirection(DcMotor.Direction.FORWARD);
-        backRight.setDirection(DcMotor.Direction.FORWARD);
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -52,13 +58,10 @@ public class DriveSubsystem {
             driveScale = MIN_POWER;
         }
 
-        // SWAPPED FORWARD & STRAFE MIXING TO FIX THE STRAFING BUG:
-        // Standard mecanum math maps strafe and forward depending on roller orientation.
-        // If forward inputs caused strafing, swapping them aligns input axes correctly:
-        double fl = strafe + forward + turn;
-        double fr = strafe - forward - turn;
-        double bl = strafe - forward + turn;
-        double br = strafe + forward - turn;
+        double fl = forward + strafe + turn;
+        double fr = forward - strafe - turn;
+        double bl = forward - strafe + turn;
+        double br = forward + strafe - turn;
 
         double max = Math.max(
                 1.0,
@@ -77,6 +80,10 @@ public class DriveSubsystem {
         frontRight.setPower(fr);
         backLeft.setPower(bl);
         backRight.setPower(br);
+    }
+
+    public void setStopper(boolean down) {
+        stopper.setPosition(down ? STOPPER_DOWN : STOPPER_UP);
     }
 
     public void stop() {
