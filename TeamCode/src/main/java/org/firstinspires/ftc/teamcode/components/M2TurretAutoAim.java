@@ -5,7 +5,6 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -33,19 +32,10 @@ public class M2TurretAutoAim {
     private static final int PWM_MIN = 500;
     private static final int PWM_MAX = 2500;
 
-    private static final double FILTER_TIME = 0.02;
-
     private static final boolean REVERSE_SERVO = true;
 
     private final GoBildaPinpointDriver pinpoint;
     private final ServoImplEx turretServo;
-
-    private final ElapsedTime timer = new ElapsedTime();
-
-    private boolean filterInitialized = false;
-
-    private double filteredX = 0.0;
-    private double filteredY = 0.0;
 
     private double commandedAngle = 0.0;
     private double lastServoPosition = -1.0;
@@ -56,6 +46,10 @@ public class M2TurretAutoAim {
     private double fieldAngle = 0.0;
     private double rawTargetAngle = 0.0;
     private double targetDistance = 0.0;
+
+    private double robotX = 0.0;
+    private double robotY = 0.0;
+    private double robotHeading = 0.0;
 
     private boolean targetReachable = false;
 
@@ -95,35 +89,40 @@ public class M2TurretAutoAim {
 
         commandedAngle = 0.0;
         sendServo(angleToPosition(commandedAngle));
-
-        timer.reset();
     }
 
     public void start() {
 
+        resetPosition(
+                START_X,
+                START_Y
+        );
+    }
+
+    // Reset robot localization to a selected field position.
+    // Heading is reset to zero degrees.
+    public void resetPosition(double x, double y) {
+
         pinpoint.setPosition(
                 new Pose2D(
                         DistanceUnit.INCH,
-                        START_X,
-                        START_Y,
+                        x,
+                        y,
                         AngleUnit.DEGREES,
-                        START_HEADING
+                        0.0
                 )
         );
 
-        filterInitialized = false;
-        timer.reset();
+        robotX = x;
+        robotY = y;
+        robotHeading = 0.0;
+
+        commandedAngle = 0.0;
+
+        sendServo(angleToPosition(commandedAngle));
     }
 
     public void update(Telemetry telemetry) {
-
-        double dt = Range.clip(
-                timer.seconds(),
-                0.001,
-                0.05
-        );
-
-        timer.reset();
 
         pinpoint.update();
 
@@ -137,36 +136,25 @@ public class M2TurretAutoAim {
 
         Pose2D pose = pinpoint.getPosition();
 
-        double robotX = pose.getX(DistanceUnit.INCH);
-        double robotY = pose.getY(DistanceUnit.INCH);
+        // Use the latest Pinpoint position directly.
+        // No position smoothing, so fast movement is not delayed.
+        robotX = pose.getX(DistanceUnit.INCH);
+        robotY = pose.getY(DistanceUnit.INCH);
 
         // Current robot heading
-        double robotHeading = pose.getHeading(AngleUnit.DEGREES);
-
-        if (!filterInitialized) {
-            filteredX = robotX;
-            filteredY = robotY;
-            filterInitialized = true;
-        }
-
-        // Filter robot position
-        double alpha = dt / (FILTER_TIME + dt);
-
-        filteredX += alpha * (robotX - filteredX);
-        filteredY += alpha * (robotY - filteredY);
+        robotHeading = pose.getHeading(AngleUnit.DEGREES);
 
         // Convert heading to radians
         double headingRad = Math.toRadians(robotHeading);
 
-        // Calculate turret pivot using the same heading convention
-        // as the rotation compensation below.
+        // Calculate turret pivot using the current heading convention
         pivotX =
-                filteredX +
+                robotX +
                         TURRET_OFFSET_X * Math.cos(headingRad) +
                         TURRET_OFFSET_Y * Math.sin(headingRad);
 
         pivotY =
-                filteredY -
+                robotY -
                         TURRET_OFFSET_X * Math.sin(headingRad) +
                         TURRET_OFFSET_Y * Math.cos(headingRad);
 
@@ -182,7 +170,7 @@ public class M2TurretAutoAim {
         );
 
         // Convert field angle into robot-relative turret angle
-        // This compensates for robot rotation.
+        // Keep the heading compensation that was working correctly.
         rawTargetAngle = AngleUnit.normalizeDegrees(
                 fieldAngle + robotHeading + AIM_TRIM
         );
@@ -191,12 +179,11 @@ public class M2TurretAutoAim {
                 rawTargetAngle >= MIN_ANGLE &&
                         rawTargetAngle <= MAX_ANGLE;
 
-        if (targetReachable) {
-            commandedAngle = rawTargetAngle;
-        }
-
+        // Always command the closest available turret angle.
+        // Previously, an unreachable target caused the turret
+        // to hold its old angle and appear to lose tracking.
         commandedAngle = Range.clip(
-                commandedAngle,
+                rawTargetAngle,
                 MIN_ANGLE,
                 MAX_ANGLE
         );
@@ -211,7 +198,6 @@ public class M2TurretAutoAim {
 
         telemetry.addData("Robot X", "%.2f", robotX);
         telemetry.addData("Robot Y", "%.2f", robotY);
-
         telemetry.addData("Robot Heading", "%.2f", robotHeading);
 
         telemetry.addData("Field Target Angle", "%.2f", fieldAngle);
@@ -228,6 +214,7 @@ public class M2TurretAutoAim {
 
         if (!targetReachable) {
             telemetry.addLine("TARGET OUTSIDE TURRET RANGE");
+            telemetry.addLine("TURRET AT NEAREST AVAILABLE ANGLE");
         }
     }
 

@@ -35,7 +35,10 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean previousX = false;
         boolean previousY = false;
         boolean previousRB = false;
+
         boolean previousDpadDown = false;
+        boolean previousDpadRight = false;
+
         boolean previousStopperDown = false;
         boolean previousStopperUp = false;
         boolean previousFlowerDown = false;
@@ -46,6 +49,8 @@ public class MainTeleOp11_20 extends LinearOpMode {
         telemetry.addLine("BioBuzz TeleOp Initialized");
         telemetry.addLine("Stopper: UP");
         telemetry.addLine("Turret Auto Aim: READY");
+        telemetry.addLine("Gamepad 1 D-Pad DOWN: Reset to (0, 0)");
+        telemetry.addLine("Gamepad 1 D-Pad RIGHT: Reset to (72, 0)");
         telemetry.update();
 
         waitForStart();
@@ -58,8 +63,13 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 double strafe = gamepad1.left_stick_x;
                 double turn = gamepad1.right_stick_x;
 
-                drive.drive(forward, strafe, turn,
-                        gamepad1.right_trigger, gamepad1.left_trigger);
+                drive.drive(
+                        forward,
+                        strafe,
+                        turn,
+                        gamepad1.right_trigger,
+                        gamepad1.left_trigger
+                );
 
                 if (gamepad2.a && !previousA) {
                     intakeRunning = !intakeRunning;
@@ -71,6 +81,16 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
                 if (gamepad2.y && !previousY) {
                     reverseEverything = !reverseEverything;
+                }
+
+                // Gamepad 1 D-pad DOWN: Reset to field origin (0, 0)
+                if (gamepad1.dpad_down && !previousDpadDown) {
+                    turret.resetPosition(0.0, 0.0);
+                }
+
+                // Gamepad 1 D-pad RIGHT: Reset to (72, 0)
+                else if (gamepad1.dpad_right && !previousDpadRight) {
+                    turret.resetPosition(72.0, 0.0);
                 }
 
                 if (gamepad2.right_bumper && !previousRB) {
@@ -101,7 +121,10 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 previousX = gamepad2.x;
                 previousY = gamepad2.y;
                 previousRB = gamepad2.right_bumper;
-                previousDpadDown = gamepad2.dpad_down;
+
+                previousDpadDown = gamepad1.dpad_down;
+                previousDpadRight = gamepad1.dpad_right;
+
                 previousStopperDown = gamepad1.right_bumper;
                 previousStopperUp = gamepad1.left_bumper;
 
@@ -122,8 +145,13 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
                 turret.update(telemetry);
 
-                telemetry.addData("Intake",
-                        intakeRunning ? (reverseEverything ? "REVERSE" : "ON") : "OFF");
+                telemetry.addData(
+                        "Intake",
+                        intakeRunning ?
+                                (reverseEverything ? "REVERSE" : "ON") :
+                                "OFF"
+                );
+
                 telemetry.addData("Outtake", outtakeRunning ? "ON" : "OFF");
                 telemetry.addData("Brake", brakeEngaged ? "ENGAGED" : "RELEASED");
                 telemetry.addData("Stopper", stopperDown ? "DOWN" : "UP");
