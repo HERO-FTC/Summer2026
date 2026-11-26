@@ -22,8 +22,6 @@ public class DriveSystemV2 {
     private static final double MAX_POWER = 0.90;
     private static final double MIN_POWER = 0.50;
 
-    private static final double STOPPER_UP = 0.7;
-    private static final double STOPPER_DOWN = 0.1;
 
     public DriveSystemV2(RoboInit robot) {
 
@@ -36,7 +34,7 @@ public class DriveSystemV2 {
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -85,9 +83,7 @@ public class DriveSystemV2 {
         backRight.setPower(br);
     }
 
-    public void setStopper(boolean down) {
-        stopper.setPosition(down ? STOPPER_DOWN : STOPPER_UP);
-    }
+
 
     public void stop() {
         frontLeft.setPower(0);
