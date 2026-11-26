@@ -36,15 +36,19 @@ public class ShooterTurretSubsystemV2 {
         outtake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         stopper.setPosition(STOPPER_CLOSED);
-        //flowerBar.setPosition(FLOWER_SERVO_UP);
+
+        // Flower bar initialization disabled.
+        // flowerBar.setPosition(FLOWER_SERVO_UP);
     }
 
     public void flowerServoUp() {
-        flowerBar.setPosition(FLOWER_SERVO_UP);
+        // Disabled temporarily.
+        // flowerBar.setPosition(FLOWER_SERVO_UP);
     }
 
     public void flowerServoDown() {
-        flowerBar.setPosition(FLOWER_SERVO_DOWN);
+        // Disabled temporarily.
+        // flowerBar.setPosition(FLOWER_SERVO_DOWN);
     }
 
     public void startFlywheel() {
@@ -77,6 +81,8 @@ public class ShooterTurretSubsystemV2 {
     public void stop() {
         outtake.setPower(0);
         stopper.setPosition(STOPPER_CLOSED);
-        flowerBar.setPosition(FLOWER_SERVO_UP);
+
+        // Flower bar shutdown command disabled.
+        // flowerBar.setPosition(FLOWER_SERVO_UP);
     }
 }
