@@ -35,7 +35,7 @@ public class RobotInit {
 
         flywheel = hardwareMap.get(DcMotorEx.class, "flywheel");
 
-        flowerServo = hardwareMap.get(Servo.class, "flowerServo");
-        turret = hardwareMap.get(CRServo.class, "kicker");
+//        flowerServo = hardwareMap.get(Servo.class, "flowerServo");
+//        turret = hardwareMap.get(CRServo.class, "kicker");
     }
 }

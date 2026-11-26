@@ -1,4 +1,3 @@
-
 pluginManagement {
     repositories {
         google()
@@ -13,6 +12,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        // WPILib Maven repository for NetworkTables (ntcore)
+        maven {
+            url = uri('https://frcmaven.wpi.edu/artifactory/release/')
+        }
 
         // Dairy Foundation - Sloth dependency
         maven {
