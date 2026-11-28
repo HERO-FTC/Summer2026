@@ -23,7 +23,7 @@ public class ShooterTurretSubsystemV2 {
     private static final double STOPPER_CLOSED = 0.2;
     private static final double STOPPER_OPEN = 0.61;
 
-    private static final double TARGET_RPM = 6000 * 0.55;
+    private static final double TARGET_RPM = 6000 * 0.50;
 
     public ShooterTurretSubsystemV2(RoboInit robot) {
 

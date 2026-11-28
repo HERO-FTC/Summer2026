@@ -16,7 +16,12 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 public class highBlue extends OpMode {
 
     private Follower follower;
-    private PathChain paths;
+    private static final double END_TIMEOUT_MS = 500;
+    private static final double PATH_MAX_POWER = 0.65;
+
+    private PathChain approach;
+    private PathChain returnLeg;
+    private boolean returning;
 
     private final Pose startPose = new Pose(
             82.5318, 141.5, Math.toRadians(90)
@@ -70,7 +75,7 @@ public class highBlue extends OpMode {
     @Override
     public void start() {
 
-        paths = follower.pathBuilder()
+        approach = follower.pathBuilder()
 
                 .addPath(new BezierLine(startPose, point1))
                 .setConstantHeadingInterpolation(Math.toRadians(270))
@@ -89,23 +94,35 @@ public class highBlue extends OpMode {
 
                 .addPath(new BezierLine(point3, point4))
                 .setConstantHeadingInterpolation(Math.toRadians(90))
+                .setTimeoutConstraint(END_TIMEOUT_MS)
+                .build();
 
+        returnLeg = follower.pathBuilder()
                 .addPath(new BezierLine(point4, point5))
                 .setLinearHeadingInterpolation(
                         Math.toRadians(90),
                         Math.toRadians(270)
                 )
 
+                .setTimeoutConstraint(END_TIMEOUT_MS)
                 .build();
 
-        follower.followPath(paths);
+        returning = false;
+        follower.followPath(approach, PATH_MAX_POWER, true);
     }
 
     @Override
     public void loop() {
         follower.update();
 
-        telemetry.addData("Status", follower.isBusy() ? "Following Path" : "Finished");
+        if (!returning && !follower.isBusy()) {
+            returning = true;
+            follower.followPath(returnLeg, PATH_MAX_POWER, true);
+        }
+
+        telemetry.addData("Status", follower.isBusy()
+                ? (returning ? "Returning to point 5" : "Driving to point 4")
+                : "Holding point 5");
         telemetry.addData("X", follower.getPose().getX());
         telemetry.addData("Y", follower.getPose().getY());
         telemetry.addData("Heading", Math.toDegrees(follower.getPose().getHeading()));

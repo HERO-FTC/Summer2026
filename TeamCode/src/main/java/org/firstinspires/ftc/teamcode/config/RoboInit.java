@@ -15,6 +15,7 @@ public class RoboInit {
 
     public DcMotorEx intake;
     public DcMotorEx outtake;
+    public DcMotorEx intake2;
 
     public Servo brake;
     public CRServo kicker;
@@ -30,6 +31,7 @@ public class RoboInit {
         backRight = hardwareMap.get(DcMotorEx.class, "backRight");
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
+        intake2 = hardwareMap.get(DcMotorEx.class, "intake2");
         outtake = hardwareMap.get(DcMotorEx.class, "outtake");
 
         brake = hardwareMap.get(Servo.class, "brake");

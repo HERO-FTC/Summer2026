@@ -146,6 +146,11 @@ public class aprilTagCameraDetectT {
         return aprilTagProcessor.getDetections();
     }
 
+    // Null means the camera has not processed another frame yet.
+    public List<AprilTagDetection> getFreshDetections() {
+        return aprilTagProcessor == null ? null : aprilTagProcessor.getFreshDetections();
+    }
+
     // Get only AprilTag cluster detections
     public List<AprilTagClusterDetection> getClusterDetections() {
 

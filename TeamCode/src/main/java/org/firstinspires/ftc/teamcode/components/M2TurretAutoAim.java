@@ -116,10 +116,6 @@ public class M2TurretAutoAim {
         robotX = x;
         robotY = y;
         robotHeading = 0.0;
-
-        commandedAngle = 0.0;
-
-        sendServo(angleToPosition(commandedAngle));
     }
 
     public void update(Telemetry telemetry) {
@@ -150,11 +146,11 @@ public class M2TurretAutoAim {
         // Calculate turret pivot using the current heading convention
         pivotX =
                 robotX +
-                        TURRET_OFFSET_X * Math.cos(headingRad) +
+                        TURRET_OFFSET_X * Math.cos(headingRad) -
                         TURRET_OFFSET_Y * Math.sin(headingRad);
 
         pivotY =
-                robotY -
+                robotY +
                         TURRET_OFFSET_X * Math.sin(headingRad) +
                         TURRET_OFFSET_Y * Math.cos(headingRad);
 
@@ -170,23 +166,18 @@ public class M2TurretAutoAim {
         );
 
         // Convert field angle into robot-relative turret angle
-        // Keep the heading compensation that was working correctly.
         rawTargetAngle = AngleUnit.normalizeDegrees(
-                fieldAngle + robotHeading + AIM_TRIM
+                fieldAngle - robotHeading + AIM_TRIM
         );
 
         targetReachable =
                 rawTargetAngle >= MIN_ANGLE &&
                         rawTargetAngle <= MAX_ANGLE;
 
-        // Always command the closest available turret angle.
-        // Previously, an unreachable target caused the turret
-        // to hold its old angle and appear to lose tracking.
-        commandedAngle = Range.clip(
-                rawTargetAngle,
-                MIN_ANGLE,
-                MAX_ANGLE
-        );
+        // Keep the last reachable command when the target is outside travel.
+        if (targetReachable) {
+            commandedAngle = rawTargetAngle;
+        }
 
         double servoPosition = angleToPosition(commandedAngle);
 
@@ -214,7 +205,7 @@ public class M2TurretAutoAim {
 
         if (!targetReachable) {
             telemetry.addLine("TARGET OUTSIDE TURRET RANGE");
-            telemetry.addLine("TURRET AT NEAREST AVAILABLE ANGLE");
+            telemetry.addLine("TURRET HOLDING POSITION");
         }
     }
 

@@ -28,7 +28,6 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean intakeRunning = false;
         boolean outtakeRunning = false;
         boolean brakeEngaged = false;
-        boolean stopperDown = false;
         boolean reverseEverything = false;
 
         boolean previousA = false;
@@ -39,15 +38,13 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean previousDpadDown = false;
         boolean previousDpadRight = false;
 
-        boolean previousStopperDown = false;
-//        boolean previousStopperUp = false;
         boolean previousFlowerDown = false;
 
         shooter.setStopper(false);
         shooter.flowerServoUp();
 
         telemetry.addLine("BioBuzz TeleOp Initialized");
-        telemetry.addLine("Stopper: UP");
+        telemetry.addLine("Stopper: CLOSED");
         telemetry.addLine("Turret Auto Aim: READY");
         telemetry.addLine("Gamepad 1 D-Pad DOWN: Reset to (0, 0)");
         telemetry.addLine("Gamepad 1 D-Pad RIGHT: Reset to (72, 0)");
@@ -98,7 +95,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 }
 
                 boolean flowerDown = gamepad2.right_trigger > 0.2;
-                boolean shooterOn = gamepad2.left_trigger > 0.2;
+                boolean stopperOpen = gamepad2.left_trigger > 0.2;
 
                 if (flowerDown != previousFlowerDown) {
                     if (flowerDown) {
@@ -110,16 +107,6 @@ public class MainTeleOp11_20 extends LinearOpMode {
                     previousFlowerDown = flowerDown;
                 }
 
-                if (shooterOn != previousStopperDown){
-                    if (shooterOn){
-                        shooter.setStopper(false);
-
-                    }else{
-                        shooter.setStopper(true);
-                    }
-                    previousStopperDown = shooterOn;
-
-                }
                 previousA = gamepad2.a;
                 previousX = gamepad2.x;
                 previousY = gamepad2.y;
@@ -129,11 +116,8 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 previousDpadRight = gamepad1.dpad_right;
 
 
-                if (intakeRunning) {
-                    intake.run(reverseEverything ? -1.0 : 1.0);
-                } else {
-                    intake.stop();
-                }
+                double intakePower = intakeRunning ? (reverseEverything ? -1.0 : 1.0) : 0.0;
+                intake.run(intakePower);
 
                 if (outtakeRunning) {
                     shooter.startFlywheel();
@@ -142,7 +126,8 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 }
 
                 shooter.setBrake(brakeEngaged);
-                shooter.setStopper(stopperDown);
+                shooter.setStopper(stopperOpen);
+                intake.updateIntake2(stopperOpen, intakePower);
 
                 turret.update(telemetry);
 
@@ -155,7 +140,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
 
                 telemetry.addData("Outtake", outtakeRunning ? "ON" : "OFF");
                 telemetry.addData("Brake", brakeEngaged ? "ENGAGED" : "RELEASED");
-                telemetry.addData("Stopper", stopperDown ? "DOWN" : "UP");
+                telemetry.addData("Stopper", stopperOpen ? "OPEN" : "CLOSED");
                 telemetry.addData("Flower Bar", flowerDown ? "DOWN" : "UP");
                 telemetry.addData("Intake 1 RPM", "%.1f", intake.getRPM());
                 telemetry.addData("Intake 2 RPM", "%.1f", intake.getRPM2());

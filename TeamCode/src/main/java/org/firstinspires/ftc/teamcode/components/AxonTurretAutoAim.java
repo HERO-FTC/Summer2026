@@ -15,8 +15,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 @TeleOp(name = "Axon Turret Auto Aim V2", group = "Turret")
 public class AxonTurretAutoAim extends OpMode {
 
-    private static final double MIN_ANGLE = -90.0;
-    private static final double MAX_ANGLE = 90.0;
+    static final double MIN_ANGLE = -90.0;
+    static final double MAX_ANGLE = 90.0;
 
     private static final double TARGET_X = 72.0;
     private static final double TARGET_Y = -72.0;
@@ -30,8 +30,8 @@ public class AxonTurretAutoAim extends OpMode {
 
     private static final double AIM_TRIM = 0.0;
 
-    private static final int PWM_MIN = 500;
-    private static final int PWM_MAX = 2500;
+    static final int PWM_MIN = 500;
+    static final int PWM_MAX = 2500;
 
     private static final double FILTER_TIME = 0.08;
     private static final double DEADBAND = 0.4;
@@ -386,7 +386,7 @@ public class AxonTurretAutoAim extends OpMode {
         }
     }
 
-    private double angleToPosition(double angle) {
+    static double angleToPosition(double angle) {
 
         double clippedAngle = Range.clip(
                 angle,
