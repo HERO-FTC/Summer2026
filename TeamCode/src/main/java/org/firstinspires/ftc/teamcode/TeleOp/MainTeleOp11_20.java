@@ -19,7 +19,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
         RoboInit robot = new RoboInit(hardwareMap);
 
         DriveSystemV2 drive = new DriveSystemV2(robot);
-        IntakeSubsystemV2 intake = new IntakeSubsystemV2(robot);
+        IntakeSubsystemV2 intake = new IntakeSubsystemV2(robot, hardwareMap);
         ShooterTurretSubsystemV2 shooter =
                 new ShooterTurretSubsystemV2(robot);
 
@@ -157,7 +157,8 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 telemetry.addData("Brake", brakeEngaged ? "ENGAGED" : "RELEASED");
                 telemetry.addData("Stopper", stopperDown ? "DOWN" : "UP");
                 telemetry.addData("Flower Bar", flowerDown ? "DOWN" : "UP");
-                telemetry.addData("Intake RPM", "%.1f", intake.getRPM());
+                telemetry.addData("Intake 1 RPM", "%.1f", intake.getRPM());
+                telemetry.addData("Intake 2 RPM", "%.1f", intake.getRPM2());
                 telemetry.addData("Outtake RPM", "%.1f", shooter.getOuttakeRPM());
 
                 telemetry.update();
