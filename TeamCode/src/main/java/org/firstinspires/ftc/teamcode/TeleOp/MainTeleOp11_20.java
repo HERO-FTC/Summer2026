@@ -40,7 +40,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
         boolean previousDpadRight = false;
 
         boolean previousStopperDown = false;
-        boolean previousStopperUp = false;
+//        boolean previousStopperUp = false;
         boolean previousFlowerDown = false;
 
         shooter.setStopper(false);
@@ -98,6 +98,7 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 }
 
                 boolean flowerDown = gamepad2.right_trigger > 0.2;
+                boolean shooterOn = gamepad2.left_trigger > 0.2;
 
                 if (flowerDown != previousFlowerDown) {
                     if (flowerDown) {
@@ -109,14 +110,16 @@ public class MainTeleOp11_20 extends LinearOpMode {
                     previousFlowerDown = flowerDown;
                 }
 
-                if (gamepad1.right_bumper && !previousStopperDown) {
-                    stopperDown = true;
-                }
+                if (shooterOn != previousStopperDown){
+                    if (shooterOn){
+                        shooter.setStopper(false);
 
-                if (gamepad1.left_bumper && !previousStopperUp) {
-                    stopperDown = false;
-                }
+                    }else{
+                        shooter.setStopper(true);
+                    }
+                    previousStopperDown = shooterOn;
 
+                }
                 previousA = gamepad2.a;
                 previousX = gamepad2.x;
                 previousY = gamepad2.y;
@@ -125,8 +128,6 @@ public class MainTeleOp11_20 extends LinearOpMode {
                 previousDpadDown = gamepad1.dpad_down;
                 previousDpadRight = gamepad1.dpad_right;
 
-                previousStopperDown = gamepad1.right_bumper;
-                previousStopperUp = gamepad1.left_bumper;
 
                 if (intakeRunning) {
                     intake.run(reverseEverything ? -1.0 : 1.0);

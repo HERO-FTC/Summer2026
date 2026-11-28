@@ -14,7 +14,7 @@ public class ShooterTurretSubsystemV2 {
     private final Servo flowerBar;
     private final Servo stopper;
 
-    private static final double BRAKE_ON = 0;
+    private static final double BRAKE_ON = 0.001;
     private static final double BRAKE_OFF = 0.51;
 
     private static final double FLOWER_SERVO_DOWN = 0.6;

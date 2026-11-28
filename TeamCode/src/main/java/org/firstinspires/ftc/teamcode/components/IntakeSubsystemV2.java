@@ -10,7 +10,7 @@ public class IntakeSubsystemV2 {
 
     private final DcMotorEx intake;
 
-    private static final double TARGET_RPM = 1150.0 * 0.99;
+    private static final double TARGET_RPM = 435 * 0.99;
 
     private final double ticksPerRev;
 
