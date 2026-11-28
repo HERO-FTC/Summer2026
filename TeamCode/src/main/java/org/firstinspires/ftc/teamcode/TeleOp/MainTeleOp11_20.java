@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.components.IntakeSubsystemV2;
 import org.firstinspires.ftc.teamcode.components.DriveSystemV2;
 import org.firstinspires.ftc.teamcode.components.ShooterTurretSubsystemV2;
+import org.firstinspires.ftc.teamcode.components.M2TurretAutoAim;
 import org.firstinspires.ftc.teamcode.config.RoboInit;
 
 @TeleOp(name = "-BioBuzzTeleOpNEW", group = "Competition")
@@ -15,7 +16,6 @@ public class MainTeleOp11_20 extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        // INITIALIZE ROBOT
         RoboInit robot = new RoboInit(hardwareMap);
 
         DriveSystemV2 drive = new DriveSystemV2(robot);
@@ -23,42 +23,41 @@ public class MainTeleOp11_20 extends LinearOpMode {
         ShooterTurretSubsystemV2 shooter =
                 new ShooterTurretSubsystemV2(robot);
 
-        // MECHANISM STATES
+        M2TurretAutoAim turret = new M2TurretAutoAim(hardwareMap);
+
         boolean intakeRunning = false;
         boolean outtakeRunning = false;
-        boolean kickerRunning = false;
-
         boolean brakeEngaged = false;
         boolean stopperDown = false;
         boolean reverseEverything = false;
 
-        // BUTTON TRACKING
         boolean previousA = false;
         boolean previousX = false;
         boolean previousY = false;
         boolean previousRB = false;
 
         boolean previousDpadDown = false;
+        boolean previousDpadRight = false;
 
         boolean previousStopperDown = false;
-        boolean previousStopperUp = false;
+//        boolean previousStopperUp = false;
+        boolean previousFlowerDown = false;
 
-        // INITIALIZE STOPPER UP
-        drive.setStopper(false);
+        shooter.setStopper(false);
+        shooter.flowerServoUp();
 
         telemetry.addLine("BioBuzz TeleOp Initialized");
         telemetry.addLine("Stopper: UP");
+        telemetry.addLine("Turret Auto Aim: READY");
+        telemetry.addLine("Gamepad 1 D-Pad DOWN: Reset to (0, 0)");
+        telemetry.addLine("Gamepad 1 D-Pad RIGHT: Reset to (72, 0)");
         telemetry.update();
 
         waitForStart();
+        turret.start();
 
         try {
-
             while (opModeIsActive()) {
-
-                // =========================
-                // DRIVE CONTROL
-                // =========================
 
                 double forward = -gamepad1.left_stick_y;
                 double strafe = gamepad1.left_stick_x;
@@ -72,75 +71,63 @@ public class MainTeleOp11_20 extends LinearOpMode {
                         gamepad1.left_trigger
                 );
 
-                // =========================
-                // GAMEPAD 2 CONTROLS
-                // =========================
-
-                // A - INTAKE ON/OFF
                 if (gamepad2.a && !previousA) {
                     intakeRunning = !intakeRunning;
                 }
 
-                // X - OUTTAKE ON/OFF
                 if (gamepad2.x && !previousX) {
                     outtakeRunning = !outtakeRunning;
                 }
 
-                // Y - REVERSE INTAKE
                 if (gamepad2.y && !previousY) {
                     reverseEverything = !reverseEverything;
                 }
 
-                // RB - BRAKE ON/OFF
+                // Gamepad 1 D-pad DOWN: Reset to field origin (0, 0)
+                if (gamepad1.dpad_down && !previousDpadDown) {
+                    turret.resetPosition(0.0, 0.0);
+                }
+
+                // Gamepad 1 D-pad RIGHT: Reset to (72, 0)
+                else if (gamepad1.dpad_right && !previousDpadRight) {
+                    turret.resetPosition(72.0, 0.0);
+                }
+
                 if (gamepad2.right_bumper && !previousRB) {
                     brakeEngaged = !brakeEngaged;
                 }
 
-                // DPAD DOWN - KICKER ON/OFF
-                if (gamepad2.dpad_down && !previousDpadDown) {
-                    kickerRunning = !kickerRunning;
+                boolean flowerDown = gamepad2.right_trigger > 0.2;
+                boolean shooterOn = gamepad2.left_trigger > 0.2;
+
+                if (flowerDown != previousFlowerDown) {
+                    if (flowerDown) {
+                        shooter.flowerServoDown();
+                    } else {
+                        shooter.flowerServoUp();
+                    }
+
+                    previousFlowerDown = flowerDown;
                 }
 
+                if (shooterOn != previousStopperDown){
+                    if (shooterOn){
+                        shooter.setStopper(false);
 
-                double flowerButton = gamepad2.right_trigger;
+                    }else{
+                        shooter.setStopper(true);
+                    }
+                    previousStopperDown = shooterOn;
 
-                if (flowerButton > 0.2) {
-                    shooter.flowerServoDown();
-                } else{
-                    shooter.flowerServoUp();
                 }
-
-                // =========================
-                // GAMEPAD 1 STOPPER CONTROLS
-                // =========================
-
-                // RB - STOPPER DOWN
-                if (gamepad1.right_bumper && !previousStopperDown) {
-                    stopperDown = true;
-                }
-
-                // LB - STOPPER UP
-                if (gamepad1.left_bumper && !previousStopperUp) {
-                    stopperDown = false;
-                }
-
-                // =========================
-                // UPDATE BUTTON STATES
-                // =========================
-
                 previousA = gamepad2.a;
                 previousX = gamepad2.x;
                 previousY = gamepad2.y;
                 previousRB = gamepad2.right_bumper;
 
-                previousDpadDown = gamepad2.dpad_down;
+                previousDpadDown = gamepad1.dpad_down;
+                previousDpadRight = gamepad1.dpad_right;
 
-                previousStopperDown = gamepad1.right_bumper;
-                previousStopperUp = gamepad1.left_bumper;
-
-                // =========================
-                // INTAKE CONTROL
-                // =========================
 
                 if (intakeRunning) {
                     intake.run(reverseEverything ? -1.0 : 1.0);
@@ -148,90 +135,39 @@ public class MainTeleOp11_20 extends LinearOpMode {
                     intake.stop();
                 }
 
-                // =========================
-                // FLYWHEEL / OUTTAKE CONTROL
-                // =========================
-
                 if (outtakeRunning) {
                     shooter.startFlywheel();
                 } else {
                     shooter.stopFlywheel();
                 }
 
-                // =========================
-                // KICKER CONTROL
-                // =========================
-
-                shooter.runKicker(
-                        kickerRunning ? -1.0 : 0.0
-                );
-
-                // =========================
-                // BRAKE CONTROL
-                // =========================
-
                 shooter.setBrake(brakeEngaged);
+                shooter.setStopper(stopperDown);
 
-                // =========================
-                // STOPPER CONTROL
-                // =========================
-
-                drive.setStopper(stopperDown);
-
-                // =========================
-                // TELEMETRY
-                // =========================
+                turret.update(telemetry);
 
                 telemetry.addData(
                         "Intake",
                         intakeRunning ?
-                                (reverseEverything ? "REVERSE" : "ON") : "OFF"
+                                (reverseEverything ? "REVERSE" : "ON") :
+                                "OFF"
                 );
 
-                telemetry.addData(
-                        "Outtake",
-                        outtakeRunning ? "ON" : "OFF"
-                );
-
-                telemetry.addData(
-                        "Kicker",
-                        kickerRunning ? "RUNNING BACKWARD" : "OFF"
-                );
-
-                telemetry.addData(
-                        "Brake",
-                        brakeEngaged ? "ENGAGED" : "RELEASED"
-                );
-
-                telemetry.addData(
-                        "Stopper",
-                        stopperDown ? "DOWN (0.30)" : "UP (0.51)"
-                );
-
-                telemetry.addData(
-                        "Intake RPM",
-                        "%.1f", intake.getRPM()
-                );
-
-                telemetry.addData(
-                        "Outtake RPM",
-                        "%.1f", shooter.getOuttakeRPM()
-                );
+                telemetry.addData("Outtake", outtakeRunning ? "ON" : "OFF");
+                telemetry.addData("Brake", brakeEngaged ? "ENGAGED" : "RELEASED");
+                telemetry.addData("Stopper", stopperDown ? "DOWN" : "UP");
+                telemetry.addData("Flower Bar", flowerDown ? "DOWN" : "UP");
+                telemetry.addData("Intake RPM", "%.1f", intake.getRPM());
+                telemetry.addData("Outtake RPM", "%.1f", shooter.getOuttakeRPM());
 
                 telemetry.update();
             }
-
         } finally {
-
-            // =========================
-            // STOP ROBOT
-            // =========================
-
-            drive.setStopper(false);
-
+            shooter.setStopper(false);
             drive.stop();
             intake.stop();
             shooter.stop();
+            turret.stop();
         }
     }
 }

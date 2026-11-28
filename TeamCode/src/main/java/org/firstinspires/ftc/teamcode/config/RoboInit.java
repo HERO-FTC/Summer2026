@@ -33,7 +33,7 @@ public class RoboInit {
         outtake = hardwareMap.get(DcMotorEx.class, "outtake");
 
         brake = hardwareMap.get(Servo.class, "brake");
-        kicker = hardwareMap.get(CRServo.class, "kick");
+       // kicker = hardwareMap.get(CRServo.class, "kick");
         turret = hardwareMap.get(Servo.class, "turretAim");
         gate = hardwareMap.get(Servo.class, "gate");
         flowerBar = hardwareMap.get(Servo.class, "flower");
